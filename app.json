@@ -1,29 +1,37 @@
 {
   "expo": {
-    "name": "hospital-bed-finder",
+    "name": "Hospital Bed Finder",
     "slug": "hospital-bed-finder",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true
+      "backgroundColor": "#FFFFFF"
     },
     "android": {
+      "package": "com.atharv30.hospitalbedfinder",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/1cfd0724-08ab-426f-be85-e1d082f41e2d"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1cfd0724-08ab-426f-be85-e1d082f41e2d"
+      }
+    },
+    "ios": {},
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
