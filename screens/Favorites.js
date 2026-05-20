@@ -51,7 +51,7 @@ export default function Favorites({ navigation }) {
                 <MaterialCommunityIcons name="heart" size={22} color="#EF4444" />
               </TouchableOpacity>
             </View>
-            <Text style={s.type}>{item.type === 'Pvt' ? 'Private General' : 'Medical Center'}</Text>
+            <Text style={s.type}>{item.type === 'Pvt' ? 'Private' : item.type === 'Gov' ? 'Government' : 'Semi-Government'}</Text>
           </View>
         </View>
 

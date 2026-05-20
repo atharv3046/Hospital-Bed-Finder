@@ -3,29 +3,41 @@ import { supabase } from '../../supabase';
 
 /**
  * Fetches hospitals from OpenStreetMap (Overpass API) near a location.
- * @param {number} lat 
- * @param {number} lng 
- * @param {number} radiusKm 
+ * Uses in-memory cache to avoid repeated API calls within 5 minutes.
  */
+
+let _osmCache = { key: '', data: [], ts: 0 };
+const OSM_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export async function discoverHospitals(lat, lng, radiusKm = 10) {
+    const cacheKey = `${lat.toFixed(3)}_${lng.toFixed(3)}_${radiusKm}`;
+
+    // Return cached result if still fresh
+    if (_osmCache.key === cacheKey && Date.now() - _osmCache.ts < OSM_CACHE_TTL) {
+        return _osmCache.data;
+    }
+
     try {
         const radiusMeters = radiusKm * 1000;
         const query = `
-      [out:json][timeout:25];
+      [out:json][timeout:15];
       (
         node["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
         way["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
-        relation["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
       );
       out center;
     `;
         const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
-        const response = await fetch(url);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+
         if (!response.ok) {
-            const text = await response.text();
-            console.error('OSM API Error:', response.status, text.slice(0, 100));
-            return [];
+            console.error('OSM API Error:', response.status);
+            return _osmCache.key === cacheKey ? _osmCache.data : [];
         }
 
         const contentType = response.headers.get('content-type');
@@ -65,44 +77,50 @@ export async function discoverHospitals(lat, lng, radiusKm = 10) {
                 lat: hLat,
                 lng: hLng,
                 distance_km: distanceKm,
-                type: 'General', // Default
+                type: 'General',
             };
         });
 
-        // Synchronize found hospitals to Supabase
-        // We attempt to upsert them using name and location as a pseudo-unique key if id is missing
-        // For simplicity, we'll just insert non-existing ones
+        // Cache the result
+        _osmCache = { key: cacheKey, data: hospitals, ts: Date.now() };
+
+        // Sync to Supabase in the background — don't block the UI
         if (hospitals.length > 0) {
-            await syncHospitalsToSupabase(hospitals);
+            syncHospitalsToSupabase(hospitals).catch(() => {});
         }
 
         return hospitals;
     } catch (error) {
-        console.error('OSM Discovery Error:', error);
-        return [];
+        if (error.name === 'AbortError') {
+            console.warn('OSM request timed out');
+        } else {
+            console.error('OSM Discovery Error:', error);
+        }
+        return _osmCache.key === cacheKey ? _osmCache.data : [];
     }
 }
 
 async function syncHospitalsToSupabase(hospitals) {
     try {
-        // Basic de-duplication strategy: Check if a hospital with same name exists near coords
-        // Or just try to insert and let RLS/Unique constraints handle it if defined.
-        // Since we don't have unique constraints on name, we'll do a soft-sync.
+        // Batch check: get all hospital names at once instead of one-by-one
+        const names = hospitals.map(h => h.name);
+        const { data: existing } = await supabase
+            .from('hospitals')
+            .select('name, lat')
+            .in('name', names);
 
-        // For each discovered hospital, we add it to Supabase if it's not already there.
-        // This allows bed counts to be tracked.
-        for (const h of hospitals) {
-            const { data: existing } = await supabase
-                .from('hospitals')
-                .select('id')
-                .eq('name', h.name)
-                .gte('lat', h.lat - 0.001)
-                .lte('lat', h.lat + 0.001)
-                .maybeSingle();
+        const existingSet = new Set(
+            (existing || []).map(e => `${e.name}_${(e.lat || 0).toFixed(3)}`)
+        );
 
-            if (!existing) {
-                await supabase.from('hospitals').insert(h);
-            }
+        // Filter to only new hospitals
+        const newHospitals = hospitals.filter(
+            h => !existingSet.has(`${h.name}_${(h.lat || 0).toFixed(3)}`)
+        );
+
+        // Batch insert all new hospitals at once
+        if (newHospitals.length > 0) {
+            await supabase.from('hospitals').insert(newHospitals);
         }
     } catch (e) {
         console.error('Sync Error:', e);

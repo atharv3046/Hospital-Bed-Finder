@@ -1,188 +1,201 @@
-// screens/EmergencyRequest.js
+// screens/EmergencyRequest.js — "Personalized Request" form
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+    View, Text, TouchableOpacity, StyleSheet, ScrollView,
+    Alert, TextInput, Modal,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { supabase } from '../supabase.js';
 import { useAuth } from './auth/AuthProvider';
-import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
-import { Card, PrimaryButton } from './ui/kit';
+import { Colors, Radii, Sp, Shadows } from './ui/theme';
 
-export default function EmergencyRequest({ navigation }) {
-    const { user, profile } = useAuth();
+const REQUIREMENTS = ['Hospital Bed', 'ICU Bed', 'Oxygen Bed', 'Ventilator', 'Blood', 'Medicine', 'Ambulance'];
+
+function DropdownPicker({ label, value, options, onChange }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <View style={s.fieldWrap}>
+            <Text style={s.label}>{label}</Text>
+            <TouchableOpacity style={s.dropdown} onPress={() => setOpen(true)} activeOpacity={0.8}>
+                <Text style={s.dropdownVal}>{value}</Text>
+                <MaterialCommunityIcons name="chevron-down" size={20} color={Colors.primary} />
+            </TouchableOpacity>
+            <Modal visible={open} transparent animationType="fade">
+                <TouchableOpacity style={s.backdrop} onPress={() => setOpen(false)} activeOpacity={1}>
+                    <View style={s.sheet}>
+                        <Text style={s.sheetTitle}>{label}</Text>
+                        {options.map(o => (
+                            <TouchableOpacity
+                                key={o}
+                                style={[s.option, value === o && s.optionActive]}
+                                onPress={() => { onChange(o); setOpen(false); }}
+                            >
+                                <Text style={[s.optionText, value === o && s.optionTextActive]}>{o}</Text>
+                                {value === o && <MaterialCommunityIcons name="check" size={18} color={Colors.primary} />}
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </TouchableOpacity>
+            </Modal>
+        </View>
+    );
+}
+
+export default function EmergencyRequest() {
+    const { user } = useAuth();
+    const [requirement, setRequirement] = useState('Hospital Bed');
+    const [location, setLocation] = useState('');
+    const [name, setName] = useState('');
+    const [agreed, setAgreed] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [form, setForm] = useState({
-        patient_name: profile?.full_name || '',
-        age: '',
-        severity: 'Moderate',
-        nature: '',
-        location: '',
-        phone: profile?.phone || '',
-    });
 
-    const fillDemo = () => {
-        const scenarios = [
-            { n: 'Cardiac Arrest', s: 'Critical', p: 'John Doe', a: '65', l: 'Plot 42, Marine Drive, Mumbai' },
-            { n: 'Severe Breathing Difficulty', s: 'Critical', p: 'Jane Smith', a: '42', l: 'B-201, Sunrise Apartments, Sector 12' },
-        ];
-        const res = scenarios[Math.floor(Math.random() * scenarios.length)];
-        setForm({ ...form, patient_name: res.p, age: res.a, severity: res.s, nature: res.n, location: res.l });
-    };
-
-    const submitRequest = async () => {
-        if (!form.nature || !form.location || !form.phone || !form.patient_name || !form.age) {
-            Alert.alert('Incomplete Data', 'All fields marked (*) are mandatory for emergency dispatch.');
-            return;
-        }
+    const submit = async () => {
+        if (!location.trim()) { Alert.alert('Missing', 'Please enter a location.'); return; }
+        if (!agreed) { Alert.alert('Terms', 'Please agree to the terms and conditions.'); return; }
 
         setLoading(true);
         try {
             const { error } = await supabase.from('emergency_requests').insert({
-                user_id: user.id,
-                patient_name: form.patient_name,
-                patient_age: form.age,
-                severity: form.severity,
-                nature_of_emergency: form.nature,
-                location_text: form.location,
-                contact_number: form.phone,
-                status: 'OPEN'
+                user_id: user?.id,
+                nature_of_emergency: requirement,
+                location_text: location.trim(),
+                patient_name: name.trim() || null,
+                severity: 'HIGH',
+                status: 'PENDING',
             });
-
             if (error) throw error;
-
-            Alert.alert('BROADCAST SENT', 'Your emergency alert has been broadcasted to all nearby hospitals and paramedic units.', [
-                { text: 'MONITOR STATUS', onPress: () => navigation.goBack() }
-            ]);
-        } catch (error) {
-            Alert.alert('Dispatch Error', error.message);
+            Alert.alert('Request Sent ✅', 'Your personalized request has been broadcast to nearby hospitals.');
+            setLocation('');
+            setName('');
+            setAgreed(false);
+        } catch (e) {
+            Alert.alert('Error', e.message);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-            <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-                <MotiView
-                    from={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    style={s.hero}
-                >
-                    <MotiView
-                        from={{ opacity: 0.5, scale: 1 }}
-                        animate={{ opacity: 1, scale: 1.05 }}
-                        transition={{ loop: true, type: 'timing', duration: 1000 }}
-                        style={s.sirenRing}
+        <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+
+            {/* Header */}
+            <View style={s.headerRow}>
+                <View>
+                    <Text style={s.title}>Personalized{'\n'}Request</Text>
+                </View>
+                <Text style={s.planeEmoji}>🏥</Text>
+            </View>
+
+            {/* Form */}
+            <View style={s.form}>
+                <DropdownPicker
+                    label="Requirement"
+                    value={requirement}
+                    options={REQUIREMENTS}
+                    onChange={setRequirement}
+                />
+
+                <View style={s.fieldWrap}>
+                    <Text style={s.label}>Location</Text>
+                    <TextInput
+                        style={s.input}
+                        value={location}
+                        onChangeText={setLocation}
+                        placeholder="e.g. Shayam Park"
+                        placeholderTextColor={Colors.sub}
                     />
-                    <MaterialCommunityIcons name="alert-decagram" size={48} color={Colors.bad} />
-                    <Text style={s.heroTitle}>EMERGENCY PROTOCOL</Text>
-                    <Text style={s.heroSub}>Broadcast live distress signals to all available medical facilities within 10km.</Text>
-                </MotiView>
-
-                <Card style={s.formCard}>
-                    <View style={s.row}>
-                        <View style={{ flex: 2 }}>
-                            <FormInput label="Patient Name *" value={form.patient_name} onChange={t => setForm({ ...form, patient_name: t })} placeholder="ID Full Name" icon="account-alert-outline" />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 12 }}>
-                            <FormInput label="Age *" value={form.age} onChange={t => setForm({ ...form, age: t })} placeholder="Yrs" keyboardType="numeric" />
-                        </View>
-                    </View>
-
-                    <Text style={s.label}>Urgency Level</Text>
-                    <View style={s.severityGrid}>
-                        {['Low', 'Moderate', 'Critical'].map(v => (
-                            <TouchableOpacity
-                                key={v}
-                                style={[s.sevBtn, form.severity === v && { backgroundColor: v === 'Critical' ? Colors.bad : Colors.accent, borderColor: 'transparent' }]}
-                                onPress={() => setForm({ ...form, severity: v })}
-                            >
-                                <Text style={[s.sevText, form.severity === v && { color: '#fff' }]}>{v}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-
-                    <FormInput label="Nature of Emergency *" value={form.nature} onChange={t => setForm({ ...form, nature: t })} placeholder="e.g. Stroke, Trauma, Cardiac" icon="heart-pulse" />
-                    <FormInput label="Exact Location / Landmark *" value={form.location} onChange={t => setForm({ ...form, location: t })} placeholder="Where should help arrive?" icon="map-marker-radius" multiline />
-                    <FormInput label="Callback Number *" value={form.phone} onChange={t => setForm({ ...form, phone: t })} placeholder="+1..." keyboardType="phone-pad" icon="phone-in-talk" />
-
-                    <View style={s.actions}>
-                        <TouchableOpacity style={s.demoBtn} onPress={fillDemo}>
-                            <Text style={s.demoText}>LOAD TEST SCENARIO</Text>
-                        </TouchableOpacity>
-
-                        <PrimaryButton
-                            title="EXECUTE BROADCAST"
-                            onPress={submitRequest}
-                            busy={loading}
-                            style={{ backgroundColor: Colors.bad, height: 60 }}
-                            icon={<MaterialCommunityIcons name="bullhorn-variant" size={24} color="#fff" />}
-                        />
-                    </View>
-
-                    <Text style={s.disclaimer}>
-                        <MaterialCommunityIcons name="shield-check" size={12} /> Privacy Protected. Dispatch units will receive your location and vitals immediately.
-                    </Text>
-                </Card>
-
-                <View style={s.protocolBox}>
-                    <Text style={s.protocolTitle}>IMMEDIATE ACTIONS:</Text>
-                    <Text style={s.protocolBody}>1. Stay on the line if dispatch calls.{"\n"}2. Clear the path for emergency vehicles.{"\n"}3. Prepare patient's basic ID and medical history.</Text>
                 </View>
 
-                <View style={{ height: 40 }} />
-            </ScrollView>
-        </KeyboardAvoidingView>
-    );
-}
+                <View style={s.fieldWrap}>
+                    <Text style={s.label}>Name</Text>
+                    <TextInput
+                        style={[s.input, s.textarea]}
+                        value={name}
+                        onChangeText={setName}
+                        placeholder="Patient name or medicine / item name"
+                        placeholderTextColor={Colors.sub}
+                        multiline
+                        numberOfLines={3}
+                        textAlignVertical="top"
+                    />
+                </View>
 
-function FormInput({ label, value, onChange, placeholder, icon, keyboardType = 'default', multiline = false }) {
-    return (
-        <View style={s.group}>
-            <Text style={s.label}>{label}</Text>
-            <View style={[s.inputWrap, multiline && { height: 80, alignItems: 'flex-start', paddingTop: 12 }]}>
-                {icon && <MaterialCommunityIcons name={icon} size={18} color={Colors.bad + '80'} style={{ marginTop: multiline ? 2 : 0 }} />}
-                <TextInput
-                    style={[s.input, icon && { marginLeft: 10 }, multiline && { textAlignVertical: 'top' }]}
-                    value={value}
-                    onChangeText={onChange}
-                    placeholder={placeholder}
-                    placeholderTextColor={Colors.sub + '50'}
-                    keyboardType={keyboardType}
-                    multiline={multiline}
-                />
+                {/* Terms */}
+                <TouchableOpacity style={s.termsRow} onPress={() => setAgreed(!agreed)} activeOpacity={0.7}>
+                    <View style={[s.checkbox, agreed && s.checkboxChecked]}>
+                        {agreed && <MaterialCommunityIcons name="check" size={14} color="#fff" />}
+                    </View>
+                    <Text style={s.termsText}>
+                        I agree to{' '}
+                        <Text style={s.termsLink}>Terms and conditions</Text>
+                    </Text>
+                </TouchableOpacity>
             </View>
-        </View>
+
+            <View style={{ flex: 1, minHeight: 40 }} />
+
+            {/* Make Request Button */}
+            <TouchableOpacity
+                style={[s.submitBtn, loading && { opacity: 0.6 }]}
+                onPress={submit}
+                disabled={loading}
+                activeOpacity={0.85}
+            >
+                <MaterialCommunityIcons name="message-text-outline" size={20} color="#fff" style={{ marginRight: 10 }} />
+                <Text style={s.submitText}>Make Request</Text>
+            </TouchableOpacity>
+
+            <View style={{ height: 40 }} />
+        </ScrollView>
     );
 }
 
 const s = StyleSheet.create({
-    wrap: { flex: 1, backgroundColor: '#FFF5F5' },
-    content: { padding: Sp.md },
-    row: { flexDirection: 'row' },
+    wrap: { flex: 1, backgroundColor: Colors.bg },
+    content: { padding: Sp.lg, paddingTop: 60, flexGrow: 1 },
 
-    hero: { alignItems: 'center', paddingVertical: Sp.lg, paddingHorizontal: 20, position: 'relative' },
-    sirenRing: { position: 'absolute', width: 200, height: 200, borderRadius: 100, borderWidth: 2, borderColor: Colors.bad + '20', top: 20 },
-    heroTitle: { fontSize: 22, fontWeight: '900', color: Colors.bad, marginTop: 12, letterSpacing: 2 },
-    heroSub: { fontSize: 13, color: Colors.sub, textAlign: 'center', marginTop: 8, lineHeight: 18 },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: Sp.xl },
+    title: { fontSize: 28, fontWeight: '900', color: Colors.primary, lineHeight: 34 },
+    planeEmoji: { fontSize: 56 },
 
-    formCard: { padding: Sp.lg, borderTopWidth: 4, borderTopColor: Colors.bad, ...Shadows.lg },
-    group: { marginBottom: Sp.md },
-    label: { fontSize: 11, fontWeight: '900', color: Colors.bad, textTransform: 'uppercase', marginBottom: 8, marginLeft: 2 },
-    inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: Radii.md, paddingHorizontal: 12, height: 50, borderWidth: 1, borderColor: '#FFE5E5' },
-    input: { flex: 1, fontSize: 15, color: Colors.text, fontWeight: '600' },
+    form: { gap: 0 },
 
-    severityGrid: { flexDirection: 'row', gap: 8, marginBottom: Sp.lg },
-    sevBtn: { flex: 1, height: 40, borderRadius: Radii.sm, backgroundColor: '#fff', borderWidth: 1, borderColor: '#FFE5E5', alignItems: 'center', justifyContent: 'center' },
-    sevText: { fontSize: 12, fontWeight: '800', color: Colors.sub },
+    fieldWrap: { marginBottom: Sp.md },
+    label: { fontSize: 12, fontWeight: '700', color: Colors.primary, marginBottom: 6, marginLeft: 2 },
+    dropdown: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        backgroundColor: '#fff', borderRadius: Radii.md, height: 50,
+        paddingHorizontal: Sp.md, ...Shadows.sm,
+    },
+    dropdownVal: { fontSize: 15, color: Colors.text, fontWeight: '500' },
+    input: {
+        backgroundColor: '#fff', borderRadius: Radii.md, height: 50,
+        paddingHorizontal: Sp.md, fontSize: 15, color: Colors.text, ...Shadows.sm,
+    },
+    textarea: { height: 90, paddingTop: 14 },
 
-    actions: { marginTop: Sp.md },
-    demoBtn: { alignSelf: 'center', marginBottom: Sp.md, padding: 8 },
-    demoText: { fontSize: 11, fontWeight: '900', color: Colors.sub, letterSpacing: 1 },
+    backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'flex-end' },
+    sheet: { backgroundColor: '#fff', borderTopLeftRadius: Radii.xl, borderTopRightRadius: Radii.xl, padding: Sp.lg },
+    sheetTitle: { fontSize: 16, fontWeight: '800', color: Colors.primary, marginBottom: Sp.md },
+    option: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: Colors.line },
+    optionActive: { backgroundColor: Colors.bg, borderRadius: Radii.sm, paddingHorizontal: Sp.sm },
+    optionText: { fontSize: 15, color: Colors.text },
+    optionTextActive: { fontWeight: '800', color: Colors.primary },
 
-    disclaimer: { fontSize: 11, color: Colors.sub, textAlign: 'center', marginTop: Sp.md, fontStyle: 'italic' },
+    termsRow: { flexDirection: 'row', alignItems: 'center', marginTop: Sp.sm },
+    checkbox: {
+        width: 20, height: 20, borderRadius: 4,
+        borderWidth: 2, borderColor: Colors.primary,
+        alignItems: 'center', justifyContent: 'center', marginRight: 10,
+    },
+    checkboxChecked: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+    termsText: { fontSize: 14, color: Colors.text },
+    termsLink: { color: Colors.primary, fontWeight: '700' },
 
-    protocolBox: { marginTop: Sp.lg, padding: 16, backgroundColor: Colors.bad + '10', borderRadius: Radii.md },
-    protocolTitle: { fontSize: 13, fontWeight: '900', color: Colors.bad, marginBottom: 8 },
-    protocolBody: { fontSize: 13, color: Colors.text, lineHeight: 20, fontWeight: '500' }
+    submitBtn: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+        backgroundColor: Colors.primary, borderRadius: Radii.xl, height: 58,
+        ...Shadows.md,
+    },
+    submitText: { color: '#fff', fontSize: 17, fontWeight: '800' },
 });

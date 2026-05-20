@@ -17,21 +17,10 @@
         "backgroundColor": "#FFFFFF"
       }
     },
-    "updates": {
-      "enabled": true,
-      "url": "https://u.expo.dev/1cfd0724-08ab-426f-be85-e1d082f41e2d"
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "1cfd0724-08ab-426f-be85-e1d082f41e2d"
-      }
-    },
     "ios": {},
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-location"
     ]
   }
 }

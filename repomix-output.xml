@@ -1,0 +1,4469 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: node_modules, android, .git, .expo, package-lock.json
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+App.js
+app.json
+assets/adaptive-icon.png
+assets/favicon.png
+assets/icon.png
+assets/splash-icon.png
+babel.config.js
+check_hospitals.js
+check_schema.js
+eas.json
+get_columns.js
+index.js
+package.json
+README.md
+screens/AddHospital.js
+screens/auth/AuthProvider.js
+screens/auth/SignIn.js
+screens/auth/SignUp.js
+screens/BookingForm.js
+screens/EmergencyRequest.js
+screens/Favorites.js
+screens/FutureAvailability.js
+screens/GeneralHospitals.js
+screens/Home.js
+screens/HospitalDetail.js
+screens/List.js
+screens/MapComponent.js
+screens/MyBookings.js
+screens/Profile.js
+screens/StaffDashboard.js
+screens/ui/cache.js
+screens/ui/i18n.js
+screens/ui/kit.js
+screens/ui/theme.js
+screens/ui/toast.js
+screens/utils/cache.js
+screens/utils/favorites.js
+screens/utils/FavoritesContext.js
+screens/utils/osm.js
+seed_basic.js
+seed_fake_requests.js
+seed_hospitals.js
+supabase.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="babel.config.js">
+module.exports = function (api) {
+    api.cache(true);
+    return {
+        presets: ['babel-preset-expo'],
+        plugins: [
+            'react-native-reanimated/plugin',
+        ],
+    };
+};
+</file>
+
+<file path="check_hospitals.js">
+const { createClient } = require('@supabase/supabase-js');
+const url = 'https://dqntsaynyheialkhzegf.supabase.co';
+const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxbnRzYXlueWhlaWFsa2h6ZWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2MzA5ODcsImV4cCI6MjA3ODIwNjk4N30.jjo8tgku7OQ_hhcqEDTkwOovDS6T1AyytD-HibPSoVo';
+const supabase = createClient(url, key);
+
+async function checkHospitals() {
+    const { data, error } = await supabase.from('hospitals').select('*');
+    if (error) {
+        console.error('Error fetching hospitals:', error);
+    } else {
+        console.log('Hospitals:', JSON.stringify(data, null, 2));
+    }
+}
+
+checkHospitals();
+</file>
+
+<file path="check_schema.js">
+const { createClient } = require('@supabase/supabase-js');
+const url = 'https://dqntsaynyheialkhzegf.supabase.co';
+const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxbnRzYXlueWhlaWFsa2h6ZWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2MzA5ODcsImV4cCI6MjA3ODIwNjk4N30.jjo8tgku7OQ_hhcqEDTkwOovDS6T1AyytD-HibPSoVo';
+const supabase = createClient(url, key);
+
+async function checkSchema() {
+    const { data: hospitals, error: hError } = await supabase.from('hospitals').select('*').limit(1);
+    console.log('Hospitals Columns:', Object.keys(hospitals[0] || {}));
+
+    const { data: bookings, error: bError } = await supabase.from('bookings').select('*').limit(1);
+    if (!bError) console.log('Bookings Columns:', Object.keys(bookings[0] || {}));
+    else console.log('Bookings error:', bError.message);
+}
+
+checkSchema();
+</file>
+
+<file path="eas.json">
+{
+  "cli": { "version": ">= 10.0.0", "appVersionSource": "remote" },
+  "build": {
+    "preview": {
+      "android": { "buildType": "apk" },
+      "distribution": "internal",
+      "channel": "preview"
+    },
+    "production": {
+      "android": { "buildType": "app-bundle" },
+      "distribution": "store",
+      "channel": "production"
+    }
+  }
+}
+</file>
+
+<file path="get_columns.js">
+const { createClient } = require('@supabase/supabase-js');
+const url = 'https://dqntsaynyheialkhzegf.supabase.co';
+const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxbnRzYXlueWhlaWFsa2h6ZWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2MzA5ODcsImV4cCI6MjA3ODIwNjk4N30.jjo8tgku7OQ_hhcqEDTkwOovDS6T1AyytD-HibPSoVo';
+const supabase = createClient(url, key);
+
+async function getColumns() {
+    const { data, error } = await supabase.from('hospitals').select('*').limit(1);
+    if (error) {
+        console.error('Error:', error);
+    } else if (data && data.length > 0) {
+        console.log('Columns:', Object.keys(data[0]));
+    } else {
+        console.log('No data found');
+    }
+}
+
+getColumns();
+</file>
+
+<file path="index.js">
+import { registerRootComponent } from 'expo';
+
+import App from './App';
+
+// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
+// It also ensures that whether you load the app in Expo Go or in a native build,
+// the environment is set up appropriately
+registerRootComponent(App);
+</file>
+
+<file path="screens/AddHospital.js">
+// screens/AddHospital.js
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
+import { supabase } from '../supabase.js';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { Card, PrimaryButton } from './ui/kit';
+
+export default function AddHospital({ navigation }) {
+    const [loading, setLoading] = useState(false);
+    const [form, setForm] = useState({
+        name: '',
+        address: '',
+        lat: '',
+        lng: '',
+        type: 'Pvt',
+        phone: '',
+        about: '',
+        specialties: '',
+        bed_total_icu: '0',
+        bed_av_icu: '0',
+        bed_total_oxygen: '0',
+        bed_av_oxygen: '0',
+        bed_total_general: '0',
+        bed_av_general: '0',
+    });
+
+    const onSubmit = async () => {
+        if (!form.name || !form.address || !form.lat || !form.lng) {
+            Alert.alert('Missing Fields', 'Name, Address, and Coordinates are required.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { data, error } = await supabase.from('hospitals').insert({
+                name: form.name,
+                address: form.address,
+                lat: parseFloat(form.lat),
+                lng: parseFloat(form.lng),
+                type: form.type,
+                phone: form.phone,
+                about: form.about,
+                specialties: form.specialties,
+                bed_total_icu: parseInt(form.bed_total_icu),
+                bed_av_icu: parseInt(form.bed_av_icu),
+                bed_total_oxygen: parseInt(form.bed_total_oxygen),
+                bed_av_oxygen: parseInt(form.bed_av_oxygen),
+                bed_total_general: parseInt(form.bed_total_general),
+                bed_av_general: parseInt(form.bed_av_general),
+                verified: true,
+            }).select().single();
+
+            if (error) throw error;
+
+            Alert.alert('Success', 'Facility registered successfully!', [
+                { text: 'VIEW DETAILS', onPress: () => navigation.navigate('HospitalDetail', { hospitalId: data.id }) },
+                { text: 'DONE', onPress: () => navigation.goBack() }
+            ]);
+        } catch (error) {
+            Alert.alert('Error', error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+            <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+                <MotiView from={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <Text style={s.title}>Register Facility</Text>
+                    <Text style={s.subtitle}>Enter hospital details to join the bed finder network.</Text>
+                </MotiView>
+
+                <Card style={s.formCard}>
+                    <Text style={s.secTitle}>Basic Information</Text>
+                    <FormInput
+                        label="Hospital Name"
+                        value={form.name}
+                        onChange={t => setForm({ ...form, name: t })}
+                        placeholder="e.g. St. Mary's General"
+                        icon="hospital-building"
+                    />
+                    <FormInput
+                        label="Physical Address"
+                        value={form.address}
+                        onChange={t => setForm({ ...form, address: t })}
+                        placeholder="Full street address, city"
+                        icon="map-marker-outline"
+                        multiline
+                    />
+
+                    <View style={s.row}>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                            <FormInput
+                                label="Latitude"
+                                value={form.lat}
+                                onChange={t => setForm({ ...form, lat: t })}
+                                placeholder="00.000"
+                                keyboardType="numeric"
+                            />
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 8 }}>
+                            <FormInput
+                                label="Longitude"
+                                value={form.lng}
+                                onChange={t => setForm({ ...form, lng: t })}
+                                placeholder="00.000"
+                                keyboardType="numeric"
+                            />
+                        </View>
+                    </View>
+
+                    <Text style={s.label}>Hospital Type</Text>
+                    <View style={s.typeGrid}>
+                        {['Pvt', 'Gov', 'Sem'].map(t => (
+                            <TouchableOpacity
+                                key={t}
+                                style={[s.typeBtn, form.type === t && s.typeActive]}
+                                onPress={() => setForm({ ...form, type: t })}
+                            >
+                                <Text style={[s.typeText, form.type === t && s.typeTextActive]}>
+                                    {t === 'Pvt' ? 'Private' : t === 'Gov' ? 'Public' : 'Semi'}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    <FormInput
+                        label="Contact Phone"
+                        value={form.phone}
+                        onChange={t => setForm({ ...form, phone: t })}
+                        placeholder="+1 000-000-0000"
+                        keyboardType="phone-pad"
+                        icon="phone-outline"
+                    />
+
+                    <View style={s.divider} />
+                    <Text style={s.secTitle}>Bed Capacity</Text>
+
+                    <BedInput label="ICU Beds" total={form.bed_total_icu} setTotal={v => setForm({ ...form, bed_total_icu: v })} av={form.bed_av_icu} setAv={v => setForm({ ...form, bed_av_icu: v })} />
+                    <BedInput label="Oxygen Beds" total={form.bed_total_oxygen} setTotal={v => setForm({ ...form, bed_total_oxygen: v })} av={form.bed_av_oxygen} setAv={v => setForm({ ...form, bed_av_oxygen: v })} />
+                    <BedInput label="General Beds" total={form.bed_total_general} setTotal={v => setForm({ ...form, bed_total_general: v })} av={form.bed_av_general} setAv={v => setForm({ ...form, bed_av_general: v })} />
+
+                    <PrimaryButton
+                        title="Complete Registration"
+                        onPress={onSubmit}
+                        busy={loading}
+                        style={{ marginTop: Sp.lg }}
+                        icon={<MaterialCommunityIcons name="check-all" size={20} color="#fff" />}
+                    />
+                </Card>
+
+                <View style={{ height: 40 }} />
+            </ScrollView>
+        </KeyboardAvoidingView>
+    );
+}
+
+function FormInput({ label, value, onChange, placeholder, icon, keyboardType = 'default', multiline = false }) {
+    return (
+        <View style={s.group}>
+            <Text style={s.label}>{label}</Text>
+            <View style={[s.inputWrap, multiline && { height: 100, alignItems: 'flex-start', paddingTop: 12 }]}>
+                {icon && <MaterialCommunityIcons name={icon} size={18} color={Colors.sub} style={{ marginTop: multiline ? 2 : 0 }} />}
+                <TextInput
+                    style={[s.input, icon && { marginLeft: 10 }, multiline && { textAlignVertical: 'top' }]}
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder={placeholder}
+                    placeholderTextColor={Colors.sub + '60'}
+                    keyboardType={keyboardType}
+                    multiline={multiline}
+                />
+            </View>
+        </View>
+    );
+}
+
+function BedInput({ label, total, setTotal, av, setAv }) {
+    return (
+        <View style={{ marginBottom: 16 }}>
+            <Text style={s.bedLabel}>{label}</Text>
+            <View style={s.row}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                    <TextInput style={s.miniInput} value={total} onChangeText={setTotal} keyboardType="numeric" placeholder="Total" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 8 }}>
+                    <TextInput style={[s.miniInput, { color: Colors.good }]} value={av} onChangeText={setAv} keyboardType="numeric" placeholder="Available" />
+                </View>
+            </View>
+        </View>
+    );
+}
+
+const s = StyleSheet.create({
+    wrap: { flex: 1, backgroundColor: Colors.bg },
+    content: { padding: Sp.md },
+    row: { flexDirection: 'row' },
+    title: { fontSize: 24, fontWeight: '900', color: Colors.text },
+    subtitle: { fontSize: 13, color: Colors.sub, marginTop: 4, marginBottom: Sp.lg },
+
+    formCard: { padding: Sp.lg },
+    secTitle: { fontSize: Typo.h2, fontWeight: '800', color: Colors.text, marginBottom: Sp.md },
+    group: { marginBottom: Sp.md },
+    label: { fontSize: 12, fontWeight: '900', color: Colors.sub, textTransform: 'uppercase', marginBottom: 8, marginLeft: 2 },
+    inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderRadius: Radii.md, paddingHorizontal: 16, height: 50 },
+    input: { flex: 1, fontSize: 15, color: Colors.text, fontWeight: '600' },
+
+    typeGrid: { flexDirection: 'row', gap: 10, marginBottom: Sp.lg },
+    typeBtn: { flex: 1, height: 44, borderRadius: Radii.md, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
+    typeActive: { backgroundColor: Colors.primary },
+    typeText: { fontSize: 13, fontWeight: '800', color: Colors.sub },
+    typeTextActive: { color: '#fff' },
+
+    divider: { height: 1, backgroundColor: Colors.line, marginVertical: Sp.lg },
+    bedLabel: { fontSize: 13, fontWeight: '800', color: Colors.text, marginBottom: 8 },
+    miniInput: { backgroundColor: Colors.bg, borderRadius: Radii.sm, height: 44, paddingHorizontal: 12, fontSize: 14, fontWeight: '700', textAlign: 'center' }
+});
+</file>
+
+<file path="screens/auth/AuthProvider.js">
+// screens/auth/AuthProvider.js
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '../../supabase.js';
+
+const AuthContext = createContext({});
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProfile = async (userId) => {
+    if (!userId) {
+      setProfile(null);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (!error && data) {
+      setProfile(data);
+    }
+  };
+
+  useEffect(() => {
+    // 1. AppState listener for auto-refresh
+    const { AppState } = require('react-native');
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        supabase.auth.startAutoRefresh();
+      } else {
+        supabase.auth.stopAutoRefresh();
+      }
+    });
+
+    // 2. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) fetchProfile(session.user.id);
+      setLoading(false);
+    });
+
+    // 3. Listen for auth changes
+    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.remove();
+      authSubscription.unsubscribe();
+    };
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, profile, loading, refreshProfile: () => fetchProfile(user?.id) }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+</file>
+
+<file path="screens/auth/SignIn.js">
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, ScrollView, KeyboardAvoidingView } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
+import { supabase } from '../../supabase.js';
+import { Colors, Radii, Sp, Shadows, Typo } from '../ui/theme';
+
+export default function SignIn({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [pass, setPass] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+
+  const onSignIn = async () => {
+    if (!email.includes('@')) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+    try {
+      setBusy(true);
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
+      if (error) throw error;
+    } catch (e) {
+      Alert.alert('Sign In Failed', e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={s.scroll} style={{ backgroundColor: Colors.bg }}>
+        <MotiView
+          from={{ opacity: 0, scale: 0.9, y: -20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: 'spring', damping: 15 }}
+          style={s.header}
+        >
+          <View style={s.iconCircle}>
+            <MaterialCommunityIcons name="hospital-marker" size={48} color={Colors.primary} />
+          </View>
+          <Text style={s.title}>Hospital Finder</Text>
+          <Text style={s.sub}>Access live bed availability dashboards</Text>
+        </MotiView>
+
+        <MotiView
+          from={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'timing', duration: 600, delay: 200 }}
+          style={s.card}
+        >
+          <Text style={s.cardTitle}>Sign In</Text>
+
+          <View style={s.inputWrapper}>
+            <Text style={s.label}>Email Address</Text>
+            <View style={s.inputContainer}>
+              <MaterialCommunityIcons name="email-outline" size={20} color={Colors.sub} style={s.fieldIcon} />
+              <TextInput
+                style={s.input}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                placeholder="you@example.com"
+                placeholderTextColor={Colors.sub + '80'}
+              />
+            </View>
+          </View>
+
+          <View style={s.inputWrapper}>
+            <Text style={s.label}>Password</Text>
+            <View style={s.inputContainer}>
+              <MaterialCommunityIcons name="lock-outline" size={20} color={Colors.sub} style={s.fieldIcon} />
+              <TextInput
+                style={s.input}
+                value={pass}
+                onChangeText={setPass}
+                secureTextEntry={!showPass}
+                placeholder="••••••••"
+                placeholderTextColor={Colors.sub + '80'}
+              />
+              <TouchableOpacity onPress={() => setShowPass(!showPass)} hitSlop={10}>
+                <MaterialCommunityIcons name={showPass ? "eye-off" : "eye"} size={20} color={Colors.sub} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <TouchableOpacity style={s.forgot}>
+            <Text style={s.forgotText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[s.btn, (busy || !email || !pass) && s.btnDisabled]}
+            onPress={onSignIn}
+            disabled={busy || !email || !pass}
+            activeOpacity={0.8}
+          >
+            {busy ? <ActivityIndicator color="#fff" /> : <Text style={s.btnText}>Sign In</Text>}
+          </TouchableOpacity>
+
+          <View style={s.footer}>
+            <Text style={s.footerText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.replace('SignUp')}>
+              <Text style={s.link}>Register</Text>
+            </TouchableOpacity>
+          </View>
+        </MotiView>
+
+        <Text style={s.disclaimer}>
+          Secure medical network access for patients & staff.
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const s = StyleSheet.create({
+  scroll: { flexGrow: 1, padding: Sp.lg, justifyContent: 'center' },
+  header: { alignItems: 'center', marginBottom: Sp.xl },
+  iconCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Sp.md,
+    ...Shadows.md
+  },
+  title: { fontSize: Typo.h1, fontWeight: '900', color: Colors.primary, letterSpacing: -0.5 },
+  sub: { fontSize: Typo.small, color: Colors.sub, marginTop: 4, textAlign: 'center', maxWidth: '80%' },
+
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: Radii.xl,
+    padding: Sp.lg,
+    ...Shadows.lg
+  },
+  cardTitle: { fontSize: Typo.h2, fontWeight: '800', color: Colors.text, marginBottom: Sp.lg, textAlign: 'center' },
+
+  inputWrapper: { marginBottom: Sp.md },
+  label: { fontSize: 13, fontWeight: '700', color: Colors.text, marginBottom: 6, marginLeft: 2 },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.bg,
+    borderWidth: 1,
+    borderColor: Colors.line,
+    borderRadius: Radii.md,
+    paddingHorizontal: 16,
+    height: 56
+  },
+  fieldIcon: { marginRight: 12 },
+  input: { flex: 1, fontSize: 16, color: Colors.text },
+
+  forgot: { alignSelf: 'flex-end', marginBottom: Sp.lg },
+  forgotText: { color: Colors.primaryLight, fontSize: 13, fontWeight: '700' },
+
+  btn: {
+    backgroundColor: Colors.primary,
+    height: 56,
+    borderRadius: Radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.md
+  },
+  btnDisabled: { opacity: 0.5, backgroundColor: Colors.sub },
+  btnText: { color: '#fff', fontWeight: '800', fontSize: 16, letterSpacing: 0.5 },
+
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: Sp.lg },
+  footerText: { color: Colors.sub, fontSize: 14 },
+  link: { color: Colors.primaryLight, fontSize: 14, fontWeight: '800' },
+
+  disclaimer: { textAlign: 'center', marginTop: Sp.xl, fontSize: 12, color: Colors.sub, opacity: 0.6 }
+});
+</file>
+
+<file path="screens/auth/SignUp.js">
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, ScrollView, KeyboardAvoidingView } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
+import { supabase } from '../../supabase';
+import { Colors, Radii, Sp, Shadows, Typo } from '../ui/theme';
+
+export default function SignUp({ navigation }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [pass, setPass] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+
+  const onSignUp = async () => {
+    if (!name.trim() || !email.trim() || !pass) {
+      Alert.alert('Missing Fields', 'Please fill in all information.');
+      return;
+    }
+    if (pass.length < 6) {
+      Alert.alert('Weak Password', 'Password should be at least 6 characters.');
+      return;
+    }
+    try {
+      setBusy(true);
+      const { error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: pass,
+        options: {
+          data: { full_name: name.trim() }
+        }
+      });
+      if (error) throw error;
+      Alert.alert('Verification Sent', 'Please check your email to verify your account before signing in.', [
+        { text: 'OK', onPress: () => navigation.replace('SignIn') }
+      ]);
+    } catch (e) {
+      Alert.alert('Sign Up Failed', e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={s.scroll} style={{ backgroundColor: Colors.bg }}>
+        <MotiView
+          from={{ opacity: 0, scale: 0.9, y: -20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: 'spring', damping: 15 }}
+          style={s.header}
+        >
+          <View style={s.iconCircle}>
+            <MaterialCommunityIcons name="account-plus-outline" size={48} color={Colors.primary} />
+          </View>
+          <Text style={s.title}>Join Network</Text>
+          <Text style={s.sub}>Create an account to track beds & bookings</Text>
+        </MotiView>
+
+        <MotiView
+          from={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'timing', duration: 600, delay: 200 }}
+          style={s.card}
+        >
+          <Text style={s.cardTitle}>Register Account</Text>
+
+          <View style={s.inputWrapper}>
+            <Text style={s.label}>Full Name</Text>
+            <View style={s.inputContainer}>
+              <MaterialCommunityIcons name="account-outline" size={20} color={Colors.sub} style={s.fieldIcon} />
+              <TextInput
+                style={s.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="John Doe"
+                placeholderTextColor={Colors.sub + '80'}
+              />
+            </View>
+          </View>
+
+          <View style={s.inputWrapper}>
+            <Text style={s.label}>Email Address</Text>
+            <View style={s.inputContainer}>
+              <MaterialCommunityIcons name="email-outline" size={20} color={Colors.sub} style={s.fieldIcon} />
+              <TextInput
+                style={s.input}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                placeholder="you@hospital.com"
+                placeholderTextColor={Colors.sub + '80'}
+              />
+            </View>
+          </View>
+
+          <View style={s.inputWrapper}>
+            <Text style={s.label}>Password</Text>
+            <View style={s.inputContainer}>
+              <MaterialCommunityIcons name="lock-outline" size={20} color={Colors.sub} style={s.fieldIcon} />
+              <TextInput
+                style={s.input}
+                value={pass}
+                onChangeText={setPass}
+                secureTextEntry={!showPass}
+                placeholder="8+ characters"
+                placeholderTextColor={Colors.sub + '80'}
+              />
+              <TouchableOpacity onPress={() => setShowPass(!showPass)} hitSlop={10}>
+                <MaterialCommunityIcons name={showPass ? "eye-off" : "eye"} size={20} color={Colors.sub} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[s.btn, (busy || !email || !pass || !name) && s.btnDisabled]}
+            onPress={onSignUp}
+            disabled={busy || !email || !pass || !name}
+            activeOpacity={0.8}
+          >
+            {busy ? <ActivityIndicator color="#fff" /> : <Text style={s.btnText}>Create Account</Text>}
+          </TouchableOpacity>
+
+          <View style={s.footer}>
+            <Text style={s.footerText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.replace('SignIn')}>
+              <Text style={s.link}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
+        </MotiView>
+
+        <Text style={s.disclaimer}>
+          By signing up, you agree to our Terms of Service & Privacy Policy.
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const s = StyleSheet.create({
+  scroll: { flexGrow: 1, padding: Sp.lg, justifyContent: 'center' },
+  header: { alignItems: 'center', marginBottom: Sp.xl },
+  iconCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Sp.md,
+    ...Shadows.md
+  },
+  title: { fontSize: Typo.h1, fontWeight: '900', color: Colors.primary, letterSpacing: -0.5 },
+  sub: { fontSize: Typo.small, color: Colors.sub, marginTop: 4, textAlign: 'center', maxWidth: '80%' },
+
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: Radii.xl,
+    padding: Sp.lg,
+    ...Shadows.lg
+  },
+  cardTitle: { fontSize: Typo.h2, fontWeight: '800', color: Colors.text, marginBottom: Sp.lg, textAlign: 'center' },
+
+  inputWrapper: { marginBottom: Sp.md },
+  label: { fontSize: 13, fontWeight: '700', color: Colors.text, marginBottom: 6, marginLeft: 2 },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.bg,
+    borderWidth: 1,
+    borderColor: Colors.line,
+    borderRadius: Radii.md,
+    paddingHorizontal: 16,
+    height: 56
+  },
+  fieldIcon: { marginRight: 12 },
+  input: { flex: 1, fontSize: 16, color: Colors.text },
+
+  btn: {
+    backgroundColor: Colors.primary,
+    height: 56,
+    borderRadius: Radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Sp.sm,
+    ...Shadows.md
+  },
+  btnDisabled: { opacity: 0.5, backgroundColor: Colors.sub },
+  btnText: { color: '#fff', fontWeight: '800', fontSize: 16, letterSpacing: 0.5 },
+
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: Sp.lg },
+  footerText: { color: Colors.sub, fontSize: 14 },
+  link: { color: Colors.primaryLight, fontSize: 14, fontWeight: '800' },
+
+  disclaimer: { textAlign: 'center', marginTop: Sp.xl, fontSize: 12, color: Colors.sub, opacity: 0.6 }
+});
+</file>
+
+<file path="screens/BookingForm.js">
+// screens/BookingForm.js
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
+import { supabase } from '../supabase';
+import { useAuth } from './auth/AuthProvider';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { PrimaryButton, Card } from './ui/kit';
+
+export default function BookingForm({ route, navigation }) {
+    const { hospital, bedType } = route.params || {};
+    const { user, profile } = useAuth();
+
+    const [loading, setLoading] = useState(false);
+    const [form, setForm] = useState({
+        patientName: profile?.full_name || '',
+        age: '',
+        condition: '',
+        contactPhone: profile?.phone || '',
+    });
+
+    const handleSubmit = async () => {
+        if (!form.patientName || !form.age || !form.contactPhone) {
+            Alert.alert('Missing Fields', 'Please fill in all required fields.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { error } = await supabase.from('bookings').insert({
+                user_id: user.id,
+                hospital_id: hospital.id,
+                patient_name: form.patientName,
+                age: parseInt(form.age),
+                condition: form.condition,
+                contact_phone: form.contactPhone,
+                bed_type: bedType,
+                status: 'PENDING'
+            });
+
+            if (error) throw error;
+
+            Alert.alert('Request Sent', 'Your bedside request is registered. Track updates in My Bookings.', [
+                { text: 'GO TO REQUESTS', onPress: () => navigation.navigate('MainTabs', { screen: 'My Bookings' }) }
+            ]);
+        } catch (e) {
+            Alert.alert('Error', e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+            <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+                <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+                    <Card style={s.headerCard}>
+                        <View style={s.hIcon}>
+                            <MaterialCommunityIcons name="clipboard-text-clock" size={32} color={Colors.primary} />
+                        </View>
+                        <View style={{ marginLeft: 16, flex: 1 }}>
+                            <Text style={s.hTitle} numberOfLines={1}>{hospital?.name}</Text>
+                            <Text style={s.hSub}>Requesting {bedType} Bed Admission</Text>
+                        </View>
+                    </Card>
+                </MotiView>
+
+                <MotiView from={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 200 }}>
+                    <Text style={s.sectionHeader}>Patient Information</Text>
+
+                    <FormInput
+                        label="Patient Name"
+                        value={form.patientName}
+                        onChange={t => setForm({ ...form, patientName: t })}
+                        placeholder="Legal name on ID"
+                        icon="account-outline"
+                    />
+
+                    <View style={s.row}>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                            <FormInput
+                                label="Age"
+                                value={form.age}
+                                onChange={t => setForm({ ...form, age: t })}
+                                placeholder="Years"
+                                keyboardType="numeric"
+                                icon="calendar-account"
+                            />
+                        </View>
+                        <View style={{ flex: 2, marginLeft: 8 }}>
+                            <FormInput
+                                label="Contact Number"
+                                value={form.contactPhone}
+                                onChange={t => setForm({ ...form, contactPhone: t })}
+                                placeholder="+1..."
+                                keyboardType="phone-pad"
+                                icon="phone-outline"
+                            />
+                        </View>
+                    </View>
+
+                    <FormInput
+                        label="Medical Condition"
+                        value={form.condition}
+                        onChange={t => setForm({ ...form, condition: t })}
+                        placeholder="Brief diagnosis or symptoms"
+                        icon="heart-pulse"
+                        multiline
+                    />
+
+                    <PrimaryButton
+                        title="Submit Admission Request"
+                        onPress={handleSubmit}
+                        busy={loading}
+                        style={{ marginTop: Sp.lg, backgroundColor: Colors.good }}
+                        icon={<MaterialCommunityIcons name="send-check" size={20} color="#fff" />}
+                    />
+
+                    <View style={s.noteBox}>
+                        <MaterialCommunityIcons name="information-outline" size={16} color={Colors.sub} />
+                        <Text style={s.noteText}>
+                            Allocating a bed depends on availability and clinical priority at the time of arrival.
+                        </Text>
+                    </View>
+                </MotiView>
+
+                <View style={{ height: 40 }} />
+            </ScrollView>
+        </KeyboardAvoidingView>
+    );
+}
+
+function FormInput({ label, value, onChange, placeholder, icon, keyboardType = 'default', multiline = false }) {
+    return (
+        <View style={s.formGroup}>
+            <Text style={s.label}>{label}</Text>
+            <View style={[s.inputWrap, multiline && { height: 100, alignItems: 'flex-start', paddingTop: 12 }]}>
+                <MaterialCommunityIcons name={icon} size={20} color={Colors.sub} style={{ marginTop: multiline ? 4 : 0 }} />
+                <TextInput
+                    style={[s.input, multiline && { textAlignVertical: 'top' }]}
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder={placeholder}
+                    placeholderTextColor={Colors.sub + '80'}
+                    keyboardType={keyboardType}
+                    multiline={multiline}
+                />
+            </View>
+        </View>
+    );
+}
+
+const s = StyleSheet.create({
+    wrap: { flex: 1, backgroundColor: Colors.bg },
+    content: { padding: Sp.md },
+    row: { flexDirection: 'row' },
+
+    headerCard: { flexDirection: 'row', alignItems: 'center', padding: Sp.md, marginBottom: Sp.lg },
+    hIcon: { width: 56, height: 56, borderRadius: 14, backgroundColor: Colors.primary + '10', alignItems: 'center', justifyContent: 'center' },
+    hTitle: { fontSize: 18, fontWeight: '800', color: Colors.text },
+    hSub: { fontSize: 13, color: Colors.accent, fontWeight: '700', marginTop: 2 },
+
+    sectionHeader: { fontSize: Typo.h2, fontWeight: '800', color: Colors.text, marginBottom: Sp.md },
+    formGroup: { marginBottom: Sp.md },
+    label: { fontSize: 13, fontWeight: '800', color: Colors.sub, marginBottom: 8, marginLeft: 2 },
+    inputWrap: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: Radii.md,
+        paddingHorizontal: 16,
+        height: 56,
+        ...Shadows.sm
+    },
+    input: { flex: 1, marginLeft: 12, fontSize: 16, color: Colors.text, fontWeight: '500' },
+
+    noteBox: { flexDirection: 'row', marginTop: Sp.lg, padding: 12, backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: Radii.sm },
+    noteText: { flex: 1, marginLeft: 8, fontSize: 12, color: Colors.sub, lineHeight: 18 }
+});
+</file>
+
+<file path="screens/EmergencyRequest.js">
+// screens/EmergencyRequest.js
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
+import { supabase } from '../supabase.js';
+import { useAuth } from './auth/AuthProvider';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { Card, PrimaryButton } from './ui/kit';
+
+export default function EmergencyRequest({ navigation }) {
+    const { user, profile } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [form, setForm] = useState({
+        patient_name: profile?.full_name || '',
+        age: '',
+        severity: 'Moderate',
+        nature: '',
+        location: '',
+        phone: profile?.phone || '',
+    });
+
+    const fillDemo = () => {
+        const scenarios = [
+            { n: 'Cardiac Arrest', s: 'Critical', p: 'John Doe', a: '65', l: 'Plot 42, Marine Drive, Mumbai' },
+            { n: 'Severe Breathing Difficulty', s: 'Critical', p: 'Jane Smith', a: '42', l: 'B-201, Sunrise Apartments, Sector 12' },
+        ];
+        const res = scenarios[Math.floor(Math.random() * scenarios.length)];
+        setForm({ ...form, patient_name: res.p, age: res.a, severity: res.s, nature: res.n, location: res.l });
+    };
+
+    const submitRequest = async () => {
+        if (!form.nature || !form.location || !form.phone || !form.patient_name || !form.age) {
+            Alert.alert('Incomplete Data', 'All fields marked (*) are mandatory for emergency dispatch.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { error } = await supabase.from('emergency_requests').insert({
+                user_id: user.id,
+                patient_name: form.patient_name,
+                patient_age: form.age,
+                severity: form.severity,
+                nature_of_emergency: form.nature,
+                location_text: form.location,
+                contact_number: form.phone,
+                status: 'OPEN'
+            });
+
+            if (error) throw error;
+
+            Alert.alert('BROADCAST SENT', 'Your emergency alert has been broadcasted to all nearby hospitals and paramedic units.', [
+                { text: 'MONITOR STATUS', onPress: () => navigation.goBack() }
+            ]);
+        } catch (error) {
+            Alert.alert('Dispatch Error', error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+            <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+                <MotiView
+                    from={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    style={s.hero}
+                >
+                    <MotiView
+                        from={{ opacity: 0.5, scale: 1 }}
+                        animate={{ opacity: 1, scale: 1.05 }}
+                        transition={{ loop: true, type: 'timing', duration: 1000 }}
+                        style={s.sirenRing}
+                    />
+                    <MaterialCommunityIcons name="alert-decagram" size={48} color={Colors.bad} />
+                    <Text style={s.heroTitle}>EMERGENCY PROTOCOL</Text>
+                    <Text style={s.heroSub}>Broadcast live distress signals to all available medical facilities within 10km.</Text>
+                </MotiView>
+
+                <Card style={s.formCard}>
+                    <View style={s.row}>
+                        <View style={{ flex: 2 }}>
+                            <FormInput label="Patient Name *" value={form.patient_name} onChange={t => setForm({ ...form, patient_name: t })} placeholder="ID Full Name" icon="account-alert-outline" />
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 12 }}>
+                            <FormInput label="Age *" value={form.age} onChange={t => setForm({ ...form, age: t })} placeholder="Yrs" keyboardType="numeric" />
+                        </View>
+                    </View>
+
+                    <Text style={s.label}>Urgency Level</Text>
+                    <View style={s.severityGrid}>
+                        {['Low', 'Moderate', 'Critical'].map(v => (
+                            <TouchableOpacity
+                                key={v}
+                                style={[s.sevBtn, form.severity === v && { backgroundColor: v === 'Critical' ? Colors.bad : Colors.accent, borderColor: 'transparent' }]}
+                                onPress={() => setForm({ ...form, severity: v })}
+                            >
+                                <Text style={[s.sevText, form.severity === v && { color: '#fff' }]}>{v}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    <FormInput label="Nature of Emergency *" value={form.nature} onChange={t => setForm({ ...form, nature: t })} placeholder="e.g. Stroke, Trauma, Cardiac" icon="heart-pulse" />
+                    <FormInput label="Exact Location / Landmark *" value={form.location} onChange={t => setForm({ ...form, location: t })} placeholder="Where should help arrive?" icon="map-marker-radius" multiline />
+                    <FormInput label="Callback Number *" value={form.phone} onChange={t => setForm({ ...form, phone: t })} placeholder="+1..." keyboardType="phone-pad" icon="phone-in-talk" />
+
+                    <View style={s.actions}>
+                        <TouchableOpacity style={s.demoBtn} onPress={fillDemo}>
+                            <Text style={s.demoText}>LOAD TEST SCENARIO</Text>
+                        </TouchableOpacity>
+
+                        <PrimaryButton
+                            title="EXECUTE BROADCAST"
+                            onPress={submitRequest}
+                            busy={loading}
+                            style={{ backgroundColor: Colors.bad, height: 60 }}
+                            icon={<MaterialCommunityIcons name="bullhorn-variant" size={24} color="#fff" />}
+                        />
+                    </View>
+
+                    <Text style={s.disclaimer}>
+                        <MaterialCommunityIcons name="shield-check" size={12} /> Privacy Protected. Dispatch units will receive your location and vitals immediately.
+                    </Text>
+                </Card>
+
+                <View style={s.protocolBox}>
+                    <Text style={s.protocolTitle}>IMMEDIATE ACTIONS:</Text>
+                    <Text style={s.protocolBody}>1. Stay on the line if dispatch calls.{"\n"}2. Clear the path for emergency vehicles.{"\n"}3. Prepare patient's basic ID and medical history.</Text>
+                </View>
+
+                <View style={{ height: 40 }} />
+            </ScrollView>
+        </KeyboardAvoidingView>
+    );
+}
+
+function FormInput({ label, value, onChange, placeholder, icon, keyboardType = 'default', multiline = false }) {
+    return (
+        <View style={s.group}>
+            <Text style={s.label}>{label}</Text>
+            <View style={[s.inputWrap, multiline && { height: 80, alignItems: 'flex-start', paddingTop: 12 }]}>
+                {icon && <MaterialCommunityIcons name={icon} size={18} color={Colors.bad + '80'} style={{ marginTop: multiline ? 2 : 0 }} />}
+                <TextInput
+                    style={[s.input, icon && { marginLeft: 10 }, multiline && { textAlignVertical: 'top' }]}
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder={placeholder}
+                    placeholderTextColor={Colors.sub + '50'}
+                    keyboardType={keyboardType}
+                    multiline={multiline}
+                />
+            </View>
+        </View>
+    );
+}
+
+const s = StyleSheet.create({
+    wrap: { flex: 1, backgroundColor: '#FFF5F5' },
+    content: { padding: Sp.md },
+    row: { flexDirection: 'row' },
+
+    hero: { alignItems: 'center', paddingVertical: Sp.lg, paddingHorizontal: 20, position: 'relative' },
+    sirenRing: { position: 'absolute', width: 200, height: 200, borderRadius: 100, borderWidth: 2, borderColor: Colors.bad + '20', top: 20 },
+    heroTitle: { fontSize: 22, fontWeight: '900', color: Colors.bad, marginTop: 12, letterSpacing: 2 },
+    heroSub: { fontSize: 13, color: Colors.sub, textAlign: 'center', marginTop: 8, lineHeight: 18 },
+
+    formCard: { padding: Sp.lg, borderTopWidth: 4, borderTopColor: Colors.bad, ...Shadows.lg },
+    group: { marginBottom: Sp.md },
+    label: { fontSize: 11, fontWeight: '900', color: Colors.bad, textTransform: 'uppercase', marginBottom: 8, marginLeft: 2 },
+    inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: Radii.md, paddingHorizontal: 12, height: 50, borderWidth: 1, borderColor: '#FFE5E5' },
+    input: { flex: 1, fontSize: 15, color: Colors.text, fontWeight: '600' },
+
+    severityGrid: { flexDirection: 'row', gap: 8, marginBottom: Sp.lg },
+    sevBtn: { flex: 1, height: 40, borderRadius: Radii.sm, backgroundColor: '#fff', borderWidth: 1, borderColor: '#FFE5E5', alignItems: 'center', justifyContent: 'center' },
+    sevText: { fontSize: 12, fontWeight: '800', color: Colors.sub },
+
+    actions: { marginTop: Sp.md },
+    demoBtn: { alignSelf: 'center', marginBottom: Sp.md, padding: 8 },
+    demoText: { fontSize: 11, fontWeight: '900', color: Colors.sub, letterSpacing: 1 },
+
+    disclaimer: { fontSize: 11, color: Colors.sub, textAlign: 'center', marginTop: Sp.md, fontStyle: 'italic' },
+
+    protocolBox: { marginTop: Sp.lg, padding: 16, backgroundColor: Colors.bad + '10', borderRadius: Radii.md },
+    protocolTitle: { fontSize: 13, fontWeight: '900', color: Colors.bad, marginBottom: 8 },
+    protocolBody: { fontSize: 13, color: Colors.text, lineHeight: 20, fontWeight: '500' }
+});
+</file>
+
+<file path="screens/Favorites.js">
+// screens/Favorites.js
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Linking, ActivityIndicator } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
+import { supabase } from '../supabase.js';
+import { getFavoriteIds, toggleFavorite } from './utils/favorites.js';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { Card, Badge, Skeleton } from './ui/kit';
+
+export default function Favorites({ navigation }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      const ids = await getFavoriteIds();
+      if (ids.length === 0) {
+        setRows([]);
+        return;
+      }
+      const { data, error } = await supabase.from('hospitals').select('*').in('id', ids);
+      if (error) throw error;
+      setRows(data || []);
+    } catch (e) {
+      // console.log('Favorites load error:', e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const onRemove = async (id) => {
+    await toggleFavorite(id);
+    setRows(prev => prev.filter(r => r.id !== id));
+  };
+
+  const renderItem = ({ item, index }) => (
+    <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 50 }}>
+      <Card style={s.card}>
+        <View style={s.cardTop}>
+          <View style={s.iconBox}>
+            <MaterialCommunityIcons name="hospital-marker" size={24} color={Colors.primary} />
+          </View>
+          <View style={s.cardMain}>
+            <View style={s.row}>
+              <Text style={s.name} numberOfLines={1}>{item.name}</Text>
+              <TouchableOpacity onPress={() => onRemove(item.id)}>
+                <MaterialCommunityIcons name="heart" size={22} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
+            <Text style={s.type}>{item.type === 'Pvt' ? 'Private General' : 'Medical Center'}</Text>
+          </View>
+        </View>
+
+        <Text style={s.addr} numberOfLines={2}>{item.address || 'Address listing unavailable'}</Text>
+
+        <View style={s.btnRow}>
+          <TouchableOpacity style={s.detailsBtn} onPress={() => navigation.navigate('HospitalDetail', { hospitalId: item.id })}>
+            <Text style={s.btnText}>View Status</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.callBtn} onPress={() => item.phone && Linking.openURL(`tel:${item.phone}`)}>
+            <MaterialCommunityIcons name="phone" size={18} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </Card>
+    </MotiView>
+  );
+
+  if (loading) return <View style={s.center}><ActivityIndicator color={Colors.primary} /></View>;
+
+  return (
+    <View style={s.container}>
+      <View style={s.header}>
+        <Text style={s.hTitle}>Saved Facilities</Text>
+        <Badge tone="accent">{rows.length} Hospitals</Badge>
+      </View>
+
+      <FlatList
+        data={rows}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        ListEmptyComponent={
+          <View style={s.empty}>
+            <MaterialCommunityIcons name="heart-outline" size={64} color={Colors.sub + '40'} />
+            <Text style={s.emptyTitle}>No Favorites Yet</Text>
+            <Text style={s.emptySub}>Hospitals you heart while searching will appear here for quick access.</Text>
+          </View>
+        }
+        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+      />
+    </View>
+  );
+}
+
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  header: { padding: 20, backgroundColor: '#fff', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', ...Shadows.sm },
+  hTitle: { fontSize: 24, fontWeight: '900', color: Colors.text },
+
+  card: { marginBottom: 16, padding: Sp.md },
+  cardTop: { flexDirection: 'row', alignItems: 'center' },
+  iconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.primary + '10', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  cardMain: { flex: 1 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  name: { fontSize: 17, fontWeight: '800', color: Colors.text, flex: 1 },
+  type: { fontSize: 12, color: Colors.accent, fontWeight: '700', marginTop: 2 },
+
+  addr: { fontSize: 13, color: Colors.sub, marginTop: 12, lineHeight: 18 },
+
+  btnRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  detailsBtn: { flex: 1, backgroundColor: Colors.primary, height: 44, borderRadius: Radii.md, alignItems: 'center', justifyContent: 'center' },
+  callBtn: { width: 44, height: 44, backgroundColor: Colors.good, borderRadius: Radii.md, alignItems: 'center', justifyContent: 'center' },
+  btnText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+
+  empty: { alignItems: 'center', marginTop: 100, padding: 40 },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, marginTop: 16 },
+  emptySub: { fontSize: 14, color: Colors.sub, textAlign: 'center', marginTop: 8 }
+});
+</file>
+
+<file path="screens/FutureAvailability.js">
+// screens/FutureAvailability.js
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
+import { supabase } from '../supabase.js';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { Card, PrimaryButton } from './ui/kit';
+
+export default function FutureAvailability({ navigation }) {
+  const [form, setForm] = useState({
+    requirement: 'ICU Bed',
+    location: '',
+    providerName: '',
+    date: '',
+    agreeTerms: true
+  });
+  const [loading, setLoading] = useState(false);
+
+  const submitRequest = async () => {
+    if (!form.location || !form.date) {
+      Alert.alert('Required Fields', 'Please provide location and preferred date.');
+      return;
+    }
+    if (!form.agreeTerms) {
+      Alert.alert('Policy Agreement', 'You must agree to the data handling terms to proceed.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.from('future_requests').insert({
+        requirement: form.requirement,
+        location_text: form.location,
+        hospital_id: null,
+        desired_date: form.date,
+        agree_terms: form.agreeTerms
+      });
+
+      if (error) throw error;
+
+      Alert.alert('Request Logged', 'We will notify you if a slot opens up on the requested date.', [
+        { text: 'DONE', onPress: () => navigation.goBack() }
+      ]);
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+        <MotiView from={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <View style={s.header}>
+            <View style={s.iconCircle}>
+              <MaterialCommunityIcons name="calendar-search" size={32} color={Colors.primary} />
+            </View>
+            <Text style={s.title}>Future Planning</Text>
+            <Text style={s.subtitle}>Reserve or track bed availability for planned medical procedures.</Text>
+          </View>
+        </MotiView>
+
+        <Card style={s.card}>
+          <Text style={s.secTitle}>Inquiry Details</Text>
+
+          <View style={s.group}>
+            <Text style={s.label}>Medical Requirement</Text>
+            <View style={s.typeGrid}>
+              {['ICU Bed', 'Oxygen Bed', 'General'].map(v => (
+                <TouchableOpacity
+                  key={v}
+                  style={[s.typeBtn, form.requirement === v && s.typeActive]}
+                  onPress={() => setForm({ ...form, requirement: v })}
+                >
+                  <Text style={[s.typeText, form.requirement === v && s.typeTextActive]}>{v}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <FormInput label="Preferred Location" value={form.location} onChange={t => setForm({ ...form, location: t })} placeholder="City or Specific Hospital Area" icon="map-marker-outline" />
+          <FormInput label="Planned Date" value={form.date} onChange={t => setForm({ ...form, date: t })} placeholder="YYYY-MM-DD" icon="calendar-clock" />
+          <FormInput label="Preferred Facility (Optional)" value={form.providerName} onChange={t => setForm({ ...form, providerName: t })} placeholder="Search Hospital..." icon="hospital-building" />
+
+          <TouchableOpacity
+            style={s.termsRow}
+            onPress={() => setForm({ ...form, agreeTerms: !form.agreeTerms })}
+          >
+            <View style={[s.check, form.agreeTerms && s.checked]}>
+              {form.agreeTerms && <MaterialCommunityIcons name="check" size={14} color="#fff" />}
+            </View>
+            <Text style={s.termsText}>Agree to predictive data processing terms</Text>
+          </TouchableOpacity>
+
+          <PrimaryButton
+            title="Submit Planning Request"
+            onPress={submitRequest}
+            busy={loading}
+            style={{ marginTop: Sp.md }}
+          />
+        </Card>
+
+        <View style={s.infoBox}>
+          <MaterialCommunityIcons name="information-outline" size={18} color={Colors.accent} />
+          <Text style={s.infoText}>This is a predictive system. Confirmation is subject to discharge rates on the requested date.</Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+function FormInput({ label, value, onChange, placeholder, icon, keyboardType = 'default' }) {
+  return (
+    <View style={s.group}>
+      <Text style={s.label}>{label}</Text>
+      <View style={s.inputWrap}>
+        <MaterialCommunityIcons name={icon} size={18} color={Colors.sub} />
+        <TextInput
+          style={s.input}
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder}
+          placeholderTextColor={Colors.sub + '60'}
+          keyboardType={keyboardType}
+        />
+      </View>
+    </View>
+  );
+}
+
+const s = StyleSheet.create({
+  wrap: { flex: 1, backgroundColor: Colors.bg },
+  content: { padding: Sp.md },
+  header: { alignItems: 'center', paddingVertical: Sp.lg },
+  iconCircle: { width: 64, height: 64, borderRadius: 20, backgroundColor: Colors.primary + '10', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  title: { fontSize: 24, fontWeight: '900', color: Colors.text },
+  subtitle: { fontSize: 13, color: Colors.sub, textAlign: 'center', marginTop: 8, paddingHorizontal: 20, lineHeight: 20 },
+
+  card: { padding: Sp.lg },
+  secTitle: { fontSize: Typo.h2, fontWeight: '800', color: Colors.text, marginBottom: Sp.md },
+  group: { marginBottom: Sp.md },
+  label: { fontSize: 11, fontWeight: '900', color: Colors.sub, textTransform: 'uppercase', marginBottom: 8, marginLeft: 2 },
+  inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderRadius: Radii.md, paddingHorizontal: 12, height: 50 },
+  input: { flex: 1, marginLeft: 10, fontSize: 15, fontWeight: '600', color: Colors.text },
+
+  typeGrid: { flexDirection: 'row', gap: 8 },
+  typeBtn: { flex: 1, height: 40, borderRadius: Radii.sm, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.line },
+  typeActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  typeText: { fontSize: 11, fontWeight: '800', color: Colors.sub },
+  typeTextActive: { color: '#fff' },
+
+  termsRow: { flexDirection: 'row', alignItems: 'center', marginVertical: Sp.md },
+  check: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: Colors.primary, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  checked: { backgroundColor: Colors.primary },
+  termsText: { fontSize: 13, color: Colors.text, fontWeight: '600' },
+
+  infoBox: { flexDirection: 'row', padding: 16, backgroundColor: Colors.accent + '10', borderRadius: Radii.md, marginTop: Sp.lg, alignItems: 'center' },
+  infoText: { flex: 1, marginLeft: 12, fontSize: 12, color: Colors.accent, fontWeight: '600', lineHeight: 18 }
+});
+</file>
+
+<file path="screens/GeneralHospitals.js">
+// screens/GeneralHospitals.js
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
+import { supabase } from '../supabase.js';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { Card, Badge, Skeleton } from './ui/kit';
+
+export default function GeneralHospitals({ navigation }) {
+    const [hospitals, setHospitals] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [query, setQuery] = useState('');
+
+    useEffect(() => { fetchHospitals(); }, []);
+
+    const fetchHospitals = async () => {
+        setLoading(true);
+        const { data, error } = await supabase.from('hospitals').select('*').order('name', { ascending: true });
+        if (!error) setHospitals(data || []);
+        setLoading(false);
+    };
+
+    const filtered = hospitals.filter(h =>
+        h.name.toLowerCase().includes(query.toLowerCase()) ||
+        (h.address || '').toLowerCase().includes(query.toLowerCase())
+    );
+
+    const renderItem = ({ item, index }) => (
+        <MotiView from={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 50 }}>
+            <TouchableOpacity onPress={() => navigation.navigate('HospitalDetail', { hospitalId: item.id })} activeOpacity={0.9}>
+                <Card style={s.card}>
+                    <View style={s.cardLeft}>
+                        <View style={s.iconBox}>
+                            <MaterialCommunityIcons name="hospital-building" size={24} color={Colors.primary} />
+                        </View>
+                    </View>
+                    <View style={s.cardMain}>
+                        <View style={s.row}>
+                            <Text style={s.name} numberOfLines={1}>{item.name}</Text>
+                            <Badge tone={item.type === 'Pvt' ? 'warn' : 'good'}>{item.type || 'Pvt'}</Badge>
+                        </View>
+                        <Text style={s.addr} numberOfLines={1}>{item.address || 'Address registered privately'}</Text>
+                        <View style={s.footer}>
+                            <View style={s.fItem}>
+                                <MaterialCommunityIcons name="bed-outline" size={14} color={Colors.sub} />
+                                <Text style={s.fText}>{(item.bed_total_icu || 0) + (item.bed_total_general || 0)} Total</Text>
+                            </View>
+                            <View style={s.fItem}>
+                                <MaterialCommunityIcons name="phone-outline" size={14} color={Colors.sub} />
+                                <Text style={s.fText} numberOfLines={1}>{item.phone || 'Registry'}</Text>
+                            </View>
+                        </View>
+                    </View>
+                </Card>
+            </TouchableOpacity>
+        </MotiView>
+    );
+
+    return (
+        <View style={s.container}>
+            <View style={s.header}>
+                <View style={s.searchBar}>
+                    <MaterialCommunityIcons name="magnify" size={20} color={Colors.sub} />
+                    <TextInput
+                        style={s.input}
+                        placeholder="Search global registry..."
+                        value={query}
+                        onChangeText={setQuery}
+                        placeholderTextColor={Colors.sub + '80'}
+                    />
+                    {query.length > 0 && (
+                        <TouchableOpacity onPress={() => setQuery('')}>
+                            <MaterialCommunityIcons name="close-circle" size={18} color={Colors.sub} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </View>
+
+            {loading ? (
+                <FlatList
+                    data={[1, 2, 3, 4, 5, 6]}
+                    renderItem={() => <View style={{ padding: 16 }}><Skeleton width="100%" height={80} style={{ borderRadius: 16 }} /></View>}
+                    keyExtractor={i => i.toString()}
+                />
+            ) : (
+                <FlatList
+                    data={filtered}
+                    keyExtractor={i => i.id}
+                    renderItem={renderItem}
+                    contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+                    ListEmptyComponent={
+                        <View style={s.empty}>
+                            <MaterialCommunityIcons name="database-off-outline" size={64} color={Colors.sub + '40'} />
+                            <Text style={s.emptyTitle}>No Records Found</Text>
+                            <Text style={s.emptySub}>Try searching for a different city or hospital name.</Text>
+                        </View>
+                    }
+                />
+            )}
+        </View>
+    );
+}
+
+const s = StyleSheet.create({
+    container: { flex: 1, backgroundColor: Colors.bg },
+    header: { paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', ...Shadows.sm },
+    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderRadius: Radii.md, paddingHorizontal: 12, height: 48 },
+    input: { flex: 1, marginLeft: 10, fontSize: 16, color: Colors.text, fontWeight: '500' },
+
+    card: { flexDirection: 'row', marginBottom: 12, padding: 12, alignItems: 'center' },
+    cardLeft: { marginRight: 12 },
+    iconBox: { width: 48, height: 48, borderRadius: 12, backgroundColor: Colors.primary + '10', alignItems: 'center', justifyContent: 'center' },
+    cardMain: { flex: 1 },
+    row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    name: { fontSize: 16, fontWeight: '800', color: Colors.text, flex: 1, marginRight: 8 },
+    addr: { fontSize: 12, color: Colors.sub, marginTop: 2, marginBottom: 8 },
+
+    footer: { flexDirection: 'row', gap: 16 },
+    fItem: { flexDirection: 'row', alignItems: 'center' },
+    fText: { fontSize: 11, fontWeight: '700', color: Colors.sub, marginLeft: 4 },
+
+    empty: { alignItems: 'center', marginTop: 100, padding: 40 },
+    emptyTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginTop: 16 },
+    emptySub: { fontSize: 14, color: Colors.sub, textAlign: 'center', marginTop: 8 }
+});
+</file>
+
+<file path="screens/Home.js">
+// screens/Home.js
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Linking, ScrollView, Dimensions } from 'react-native';
+import { MotiView, MotiText } from 'moti';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+import { supabase } from '../supabase.js';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { Card, PrimaryButton } from './ui/kit';
+
+const { width } = Dimensions.get('window');
+
+export default function Home({ navigation }) {
+  const [stats, setStats] = useState({ hospitals: 0, beds: 0 });
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [coords, setCoords] = useState(null);
+  const [placeLabel, setPlaceLabel] = useState('Detecting location…');
+
+  useEffect(() => {
+    fetchStats();
+    detectLocation();
+  }, []);
+
+  const detectLocation = async () => {
+    try {
+      setPlaceLabel('Detecting location…');
+      const { status } = await Location.getForegroundPermissionsAsync();
+      let finalStatus = status;
+      if (status !== 'granted') {
+        const { status: askStatus } = await Location.requestForegroundPermissionsAsync();
+        finalStatus = askStatus;
+      }
+
+      if (finalStatus !== 'granted') {
+        setPlaceLabel('Permission denied');
+        return;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+
+      const [addr] = await Location.reverseGeocodeAsync({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude
+      });
+
+      if (addr) {
+        setPlaceLabel(`${addr.city || addr.region || addr.name || ''}`);
+      } else {
+        setPlaceLabel('Current Location');
+      }
+    } catch (e) {
+      setPlaceLabel('Tap to retry');
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const { data, error, count } = await supabase
+        .from('hospitals')
+        .select('bed_av_icu, bed_av_oxygen, bed_av_general', { count: 'exact' });
+
+      if (!error && data) {
+        const totalBeds = data.reduce((acc, h) =>
+          acc + (h.bed_av_icu || 0) + (h.bed_av_oxygen || 0) + (h.bed_av_general || 0), 0);
+        setStats({ hospitals: count || data.length, beds: totalBeds });
+      }
+    } catch (e) {
+      // console.log('Favorites load error:', e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const goList = () => navigation.navigate('MainTabs', { screen: 'List', params: { coords, q: query?.trim() || null } });
+  const emergencyCall = () => Linking.openURL('tel:112');
+
+  return (
+    <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      {/* Location Badge */}
+      <MotiView
+        from={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={s.topRow}
+      >
+        <TouchableOpacity
+          onPress={detectLocation}
+          activeOpacity={0.7}
+          style={s.locBadge}
+        >
+          <MaterialCommunityIcons name="map-marker" size={14} color={Colors.primary} />
+          <Text style={s.locText}>{placeLabel}</Text>
+        </TouchableOpacity>
+      </MotiView>
+
+      {/* Hero Analytics */}
+      <Card style={s.hero}>
+        <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', damping: 12 }}>
+          <Text style={s.heroSub}>NETWORK OVERVIEW</Text>
+          <Text style={s.heroTitle}>Live Dashboard</Text>
+        </MotiView>
+
+        <View style={s.statsWrapper}>
+          <MotiView
+            from={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 300 }}
+            style={s.statBox}
+          >
+            <Text style={s.statNum}>{stats.hospitals}</Text>
+            <Text style={s.statName}>Hospitals</Text>
+          </MotiView>
+          <View style={s.vDivider} />
+          <MotiView
+            from={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 400 }}
+            style={s.statBox}
+          >
+            <Text style={s.statNum}>{stats.beds}+</Text>
+            <Text style={s.statName}>Active Beds</Text>
+          </MotiView>
+        </View>
+      </Card>
+
+      {/* Modern Search */}
+      <View style={s.searchSection}>
+        <View style={s.searchContainer}>
+          <MaterialCommunityIcons name="magnify" size={22} color={Colors.sub} />
+          <TextInput
+            style={s.searchInput}
+            placeholder="Search by hospital, city or address"
+            placeholderTextColor={Colors.sub + '80'}
+            value={query}
+            onChangeText={setQuery}
+            onSubmitEditing={goList}
+          />
+        </View>
+        <TouchableOpacity style={s.searchBtn} onPress={goList}>
+          <MaterialCommunityIcons name="arrow-right" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Quick Actions Grid */}
+      <Text style={s.sectionHeader}>Quick Actions</Text>
+      <View style={s.actionGrid}>
+        <ActionIcon
+          name="hospital-building"
+          label="Global Registry"
+          color="#3B82F6"
+          onPress={() => navigation.navigate('GeneralHospitals')}
+        />
+        <ActionIcon
+          name="calendar-clock"
+          label="Schedules"
+          color="#8B5CF6"
+          onPress={() => navigation.navigate('FutureAvailability')}
+        />
+        <ActionIcon
+          name="plus-circle-outline"
+          label="Add Facility"
+          color="#10B981"
+          onPress={() => navigation.navigate('AddHospital')}
+        />
+      </View>
+
+      {/* Emergency Footer */}
+      <TouchableOpacity style={s.emergencyCard} onPress={emergencyCall}>
+        <View style={s.emergencyIcon}>
+          <MaterialCommunityIcons name="phone-plus" size={24} color="#fff" />
+        </View>
+        <View style={{ flex: 1, marginLeft: 16 }}>
+          <Text style={s.emergencyTitle}>Emergency Help</Text>
+          <Text style={s.emergencySub}>Instantly dial emergency services</Text>
+        </View>
+        <Text style={s.emergencyNum}>112</Text>
+      </TouchableOpacity>
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
+  );
+}
+
+function ActionIcon({ name, label, color, onPress }) {
+  return (
+    <TouchableOpacity style={s.actionItem} onPress={onPress} activeOpacity={0.7}>
+      <View style={[s.actionCircle, { backgroundColor: color + '15' }]}>
+        <MaterialCommunityIcons name={name} size={28} color={color} />
+      </View>
+      <Text style={s.actionLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+const s = StyleSheet.create({
+  wrap: { flex: 1, backgroundColor: Colors.bg },
+  content: { padding: Sp.md },
+
+  topRow: { alignItems: 'center', marginBottom: Sp.md, marginTop: 10 },
+  locBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: Radii.pill,
+    ...Shadows.sm
+  },
+  locText: { fontSize: 13, fontWeight: '700', color: Colors.text, marginLeft: 4 },
+
+  hero: {
+    padding: Sp.lg,
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    borderColor: 'transparent',
+    overflow: 'hidden'
+  },
+  heroSub: { fontSize: 11, fontWeight: '900', color: Colors.accent, letterSpacing: 2, marginBottom: 4 },
+  heroTitle: { fontSize: Typo.h1, fontWeight: '900', color: '#fff' },
+
+  statsWrapper: {
+    flexDirection: 'row',
+    marginTop: Sp.lg,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: Radii.md,
+    paddingVertical: 12,
+    width: '100%'
+  },
+  statBox: { flex: 1, alignItems: 'center' },
+  statNum: { fontSize: 32, fontWeight: '900', color: '#fff' },
+  statName: { fontSize: 11, fontWeight: '700', color: Colors.accent, textTransform: 'uppercase' },
+  vDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
+
+  searchSection: { flexDirection: 'row', marginTop: Sp.md, gap: 12 },
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: Radii.md,
+    paddingHorizontal: 16,
+    height: 60,
+    ...Shadows.md
+  },
+  searchInput: { flex: 1, marginLeft: 12, fontSize: 16, color: Colors.text, fontWeight: '500' },
+  searchBtn: {
+    width: 60,
+    height: 60,
+    borderRadius: Radii.md,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.md
+  },
+
+  sectionHeader: { fontSize: Typo.h2, fontWeight: '800', color: Colors.text, marginTop: Sp.lg, marginBottom: Sp.md },
+  actionGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Sp.lg },
+  actionItem: { alignItems: 'center', width: (width - 48) / 3 },
+  actionCircle: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  actionLabel: { fontSize: 12, fontWeight: '700', color: Colors.text, textAlign: 'center' },
+
+  emergencyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: Radii.lg,
+    padding: 16,
+    marginTop: Sp.sm,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.bad,
+    ...Shadows.md
+  },
+  emergencyIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.bad, alignItems: 'center', justifyContent: 'center' },
+  emergencyTitle: { fontSize: 16, fontWeight: '800', color: Colors.text },
+  emergencySub: { fontSize: 12, color: Colors.sub, marginTop: 2 },
+  emergencyNum: { fontSize: 18, fontWeight: '900', color: Colors.bad }
+});
+</file>
+
+<file path="screens/HospitalDetail.js">
+// screens/HospitalDetail.js
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, ActivityIndicator, Alert, ScrollView, Dimensions } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
+import { supabase } from '../supabase.js';
+import { toggleFavorite, getFavoriteIds } from './utils/favorites.js';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { Card, Badge, Skeleton } from './ui/kit';
+
+const { width } = Dimensions.get('window');
+
+export default function HospitalDetail({ route, navigation }) {
+  const { hospitalId } = route.params;
+  const [h, setH] = useState(null);
+  const [favIds, setFavIds] = useState([]);
+
+  useEffect(() => {
+    (async () => { setFavIds(await getFavoriteIds()); })();
+  }, []);
+  const isFav = favIds.includes(hospitalId);
+
+  const load = async () => {
+    const { data, error } = await supabase
+      .from('hospitals')
+      .select('*')
+      .eq('id', hospitalId).maybeSingle();
+
+    if (error) Alert.alert('Error', error.message);
+    setH(data);
+  };
+
+  useEffect(() => {
+    load();
+    const channel = supabase.channel(`hospital-detail-${hospitalId}`).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'hospitals', filter: `id=eq.${hospitalId}` }, () => load()).subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [hospitalId]);
+
+  const onToggleFav = async () => setFavIds(await toggleFavorite(hospitalId));
+  const bookBed = (type) => navigation.navigate('BookingForm', { hospital: h, bedType: type });
+
+  if (!h) {
+    return (
+      <View style={s.center}>
+        <ActivityIndicator color={Colors.primary} />
+        <Skeleton width="80%" height={200} style={{ marginTop: 20 }} />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      {/* Hero Header */}
+      <MotiView
+        from={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        style={s.hero}
+      >
+        <View style={s.heroOverlay}>
+          <View style={s.heroHeader}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
+              <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={onToggleFav} style={s.favBtn}>
+              <MaterialCommunityIcons name={isFav ? "heart" : "heart-outline"} size={26} color={isFav ? "#EF4444" : "#fff"} />
+            </TouchableOpacity>
+          </View>
+          <View style={s.heroTitleBox}>
+            <Text style={s.heroName}>{h.name}</Text>
+            <View style={s.locRow}>
+              <MaterialCommunityIcons name="map-marker" size={16} color={Colors.accent} />
+              <Text style={s.heroAddr}>{h.address || 'Location information unavailable'}</Text>
+            </View>
+          </View>
+        </View>
+      </MotiView>
+
+      <MotiView from={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 200 }}>
+        {/* Trust Indicators */}
+        <View style={s.trustRow}>
+          {h.verified && (
+            <View style={s.trustBadge}>
+              <MaterialCommunityIcons name="check-decagram" size={16} color={Colors.good} />
+              <Text style={s.trustText}>Verified</Text>
+            </View>
+          )}
+          <View style={s.trustBadge}>
+            <MaterialCommunityIcons name="ambulance" size={16} color={Colors.primary} />
+            <Text style={s.trustText}>{h.response_time_avg || '15'} min Response</Text>
+          </View>
+        </View>
+
+        {/* Info Card */}
+        <Card style={s.infoCard}>
+          <Text style={s.sectionHeader}>About Facility</Text>
+          <Text style={s.aboutText}>
+            {h.about || `A premium healthcare facility specializing in emergency care and residential medical services. Equipped with state-of-the-art life support systems.`}
+          </Text>
+          <View style={s.divider} />
+          <InfoRow icon="phone" label="Emergency Contact" value={h.phone || 'Registry listing restricted'} />
+          <InfoRow icon="hospital-building" label="Facility Type" value={h.type === 'Pvt' ? 'Private General' : 'Government Public'} />
+
+          <PrimaryButton
+            title="GET DIRECTIONS"
+            onPress={() => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}`)}
+            style={{ marginTop: Sp.md, backgroundColor: Colors.primary + '15' }}
+            icon={<MaterialCommunityIcons name="google-maps" size={20} color={Colors.primary} />}
+          />
+        </Card>
+
+        {/* Bed Status */}
+        <Text style={s.sectionHeader}>Live Bed Availability</Text>
+        <View style={s.bedGrid}>
+          <BedTile label="ICU" av={h.bed_av_icu} total={h.bed_total_icu} onBook={() => bookBed('ICU')} />
+          <BedTile label="O2" av={h.bed_av_oxygen} total={h.bed_total_oxygen} onBook={() => bookBed('OXYGEN')} />
+          <BedTile label="GEN" av={h.bed_av_general} total={h.bed_total_general} onBook={() => bookBed('GENERAL')} />
+        </View>
+
+        {/* Services */}
+        <Text style={s.sectionHeader}>Services & Specialties</Text>
+        <View style={s.tagRow}>
+          {(h.specialties || 'Emergency, Surgery, Pediatrics, Diagnostics').split(',').map((tag, i) => (
+            <View key={i} style={s.tag}>
+              <Text style={s.tagText}>{tag.trim()}</Text>
+            </View>
+          ))}
+        </View>
+
+        <TouchableOpacity
+          style={s.futureBtn}
+          onPress={() => navigation.navigate('FutureAvailability')}
+        >
+          <MaterialCommunityIcons name="calendar-clock" size={20} color="#fff" />
+          <Text style={s.futureBtnText}>Check Historical Trends</Text>
+        </TouchableOpacity>
+      </MotiView>
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
+  );
+}
+
+function InfoRow({ icon, label, value }) {
+  return (
+    <View style={s.infoRow}>
+      <MaterialCommunityIcons name={icon} size={20} color={Colors.primary} />
+      <View style={{ marginLeft: 12 }}>
+        <Text style={s.infoLabel}>{label}</Text>
+        <Text style={s.infoValue}>{value}</Text>
+      </View>
+    </View>
+  );
+}
+
+function BedTile({ label, av = 0, total = 0, onBook }) {
+  const tone = av > 5 ? 'good' : av > 0 ? 'warn' : 'bad';
+  return (
+    <Card style={s.bedTile}>
+      <Text style={s.bedLabel}>{label}</Text>
+      <Text style={[s.bedCount, { color: av > 0 ? Colors.good : Colors.bad }]}>{av}</Text>
+      <Text style={s.bedTotal}>out of {total}</Text>
+      {av > 0 ? (
+        <TouchableOpacity style={s.miniBookBtn} onPress={onBook}>
+          <Text style={s.miniBookText}>BOOK</Text>
+        </TouchableOpacity>
+      ) : (
+        <View style={s.fullBadge}><Text style={s.fullText}>FULL</Text></View>
+      )}
+    </Card>
+  );
+}
+
+const s = StyleSheet.create({
+  wrap: { flex: 1, backgroundColor: Colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  content: { padding: Sp.md },
+
+  hero: {
+    height: 240,
+    borderRadius: Radii.xl,
+    backgroundColor: Colors.primary,
+    overflow: 'hidden',
+    ...Shadows.lg
+  },
+  heroOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', padding: 20, justifyContent: 'space-between' },
+  heroHeader: { flexDirection: 'row', justifyContent: 'space-between' },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
+  favBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
+  heroTitleBox: { marginBottom: 10 },
+  heroName: { fontSize: 28, fontWeight: '900', color: '#fff', letterSpacing: -0.5 },
+  locRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  heroAddr: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginLeft: 4, fontWeight: '600' },
+
+  trustRow: { flexDirection: 'row', gap: 12, marginTop: Sp.md, marginBottom: Sp.md },
+  trustBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingVertical: 8, paddingHorizontal: 12, borderRadius: Radii.pill, ...Shadows.sm },
+  trustText: { marginLeft: 6, fontSize: 12, fontWeight: '700', color: Colors.text },
+
+  sectionHeader: { fontSize: 18, fontWeight: '800', color: Colors.text, marginTop: Sp.md, marginBottom: Sp.sm },
+  infoCard: { padding: Sp.lg },
+  aboutText: { fontSize: 15, color: Colors.sub, lineHeight: 22 },
+  divider: { height: 1, backgroundColor: Colors.line, marginVertical: Sp.md },
+  infoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  infoLabel: { fontSize: 11, fontWeight: '900', color: Colors.sub, textTransform: 'uppercase' },
+  infoValue: { fontSize: 15, fontWeight: '700', color: Colors.text },
+
+  bedGrid: { flexDirection: 'row', gap: 12 },
+  bedTile: { flex: 1, alignItems: 'center', padding: 12 },
+  bedLabel: { fontSize: 12, fontWeight: '900', color: Colors.sub },
+  bedCount: { fontSize: 28, fontWeight: '900', marginVertical: 2 },
+  bedTotal: { fontSize: 10, color: Colors.sub, marginBottom: 12 },
+  miniBookBtn: { backgroundColor: Colors.primary, paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radii.sm },
+  miniBookText: { color: '#fff', fontSize: 10, fontWeight: '900' },
+  fullBadge: { backgroundColor: Colors.bg, paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radii.sm },
+  fullText: { color: Colors.sub, fontSize: 10, fontWeight: '900' },
+
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tag: { backgroundColor: '#fff', paddingVertical: 8, paddingHorizontal: 16, borderRadius: Radii.pill, ...Shadows.sm },
+  tagText: { color: Colors.text, fontSize: 12, fontWeight: '700' },
+
+  futureBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.accent,
+    marginTop: Sp.lg,
+    height: 56,
+    borderRadius: Radii.md,
+    ...Shadows.md
+  },
+  futureBtnText: { marginLeft: 10, color: '#fff', fontSize: 15, fontWeight: '800' }
+});
+</file>
+
+<file path="screens/List.js">
+// screens/List.js
+import { useEffect, useState, useCallback, memo } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Linking, Alert, RefreshControl, Dimensions, ActivityIndicator } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView, AnimatePresence } from 'moti';
+import * as Location from 'expo-location';
+import { supabase } from '../supabase.js';
+import { toggleFavorite, getFavoriteIds } from './utils/favorites.js';
+import { discoverHospitals } from './utils/osm.js';
+import MapComponent from './MapComponent.js';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { Card, Badge, Skeleton } from './ui/kit';
+
+const { width } = Dimensions.get('window');
+const RADIUS_OPTIONS = [5, 10, 25, 50, 100];
+const TYPES = ['All', 'Pvt', 'Gov', 'Sem'];
+
+const HospitalCard = memo(({ item, favIds, navigation, onFavPress, onDirection, index }) => {
+  const isFav = favIds.includes(item.id);
+  const totalBeds = (item.bed_av_general || 0) + (item.bed_av_oxygen || 0) + (item.bed_av_icu || 0);
+
+  const statusTone = totalBeds > 10 ? 'good' : totalBeds > 0 ? 'warn' : 'bad';
+  const statusLabel = totalBeds > 10 ? 'Available' : totalBeds > 0 ? 'Limited' : 'Full';
+
+  return (
+    <MotiView
+      from={{ opacity: 0, translateY: 20 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{ type: 'timing', duration: 400, delay: index * 100 }}
+    >
+      <Card
+        onPress={() => navigation.navigate('HospitalDetail', { hospitalId: item.id })}
+        style={styles.card}
+      >
+        <View style={styles.cardTop}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+            <View style={styles.row}>
+              <MaterialCommunityIcons name="map-marker-outline" size={14} color={Colors.sub} />
+              <Text style={styles.cardAddr} numberOfLines={1}>{item.address || 'Location data unavailable'}</Text>
+            </View>
+          </View>
+          <TouchableOpacity onPress={() => onFavPress(item.id)} hitSlop={10}>
+            <MaterialCommunityIcons
+              name={isFav ? "heart" : "heart-outline"}
+              size={24}
+              color={isFav ? "#EF4444" : Colors.sub}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.statusRow}>
+          <Badge tone={statusTone}>{statusLabel}</Badge>
+          <Text style={styles.distText}>
+            <MaterialCommunityIcons name="navigation-variant" size={12} color={Colors.primary} /> {item.distance_km ?? '?'} km
+          </Text>
+        </View>
+
+        <View style={styles.statsGrid}>
+          <StatBox label="GEN" count={item.bed_av_general} />
+          <StatBox label="O2" count={item.bed_av_oxygen} />
+          <StatBox label="ICU" count={item.bed_av_icu} />
+        </View>
+
+        <View style={styles.cardActions}>
+          <TouchableOpacity
+            style={styles.dirBtn}
+            onPress={() => onDirection(item.lat, item.lng)}
+          >
+            <MaterialCommunityIcons name="directions" size={18} color={Colors.primary} />
+            <Text style={styles.dirBtnText}>Directions</Text>
+          </TouchableOpacity>
+          <View style={styles.flex} />
+          <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.sub} />
+        </View>
+      </Card>
+    </MotiView>
+  );
+});
+
+const StatBox = ({ label, count }) => (
+  <View style={styles.statBox}>
+    <Text style={styles.statLabel}>{label}</Text>
+    <Text style={[styles.statCount, { color: count > 0 ? Colors.good : Colors.text }]}>{count || 0}</Text>
+  </View>
+);
+
+const SearchHeader = ({
+  query, setQuery,
+  showFilters, setShowFilters,
+  radiusKm, setRadiusKm,
+  hType, setHType,
+  showMap, setShowMap
+}) => (
+  <View style={styles.header}>
+    <View style={styles.searchRow}>
+      <View style={styles.searchBox}>
+        <MaterialCommunityIcons name="magnify" size={20} color={Colors.sub} />
+        <TextInput
+          style={styles.input}
+          placeholder="Search hospitals..."
+          placeholderTextColor={Colors.sub + '80'}
+          value={query}
+          onChangeText={setQuery}
+        />
+      </View>
+      <TouchableOpacity
+        style={[styles.iconBtn, showFilters && styles.iconBtnActive]}
+        onPress={() => setShowFilters(!showFilters)}
+      >
+        <MaterialCommunityIcons name="tune" size={20} color={showFilters ? '#fff' : Colors.text} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.iconBtn}
+        onPress={() => setShowMap(!showMap)}
+      >
+        <MaterialCommunityIcons name={showMap ? "format-list-bulleted" : "map-outline"} size={20} color={Colors.text} />
+      </TouchableOpacity>
+    </View>
+
+    <AnimatePresence>
+      {showFilters && (
+        <MotiView
+          from={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 160 }}
+          exit={{ opacity: 0, height: 0 }}
+          style={styles.filterBox}
+        >
+          <Text style={styles.filterTitle}>SEARCH RADIUS</Text>
+          <View style={styles.chipRow}>
+            {RADIUS_OPTIONS.map(r => (
+              <TouchableOpacity
+                key={r}
+                style={[styles.chip, radiusKm === r && styles.chipActive]}
+                onPress={() => setRadiusKm(r)}
+              >
+                <Text style={[styles.chipText, radiusKm === r && styles.chipTextActive]}>{r}km</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.filterTitle}>FACILITY TYPE</Text>
+          <View style={styles.chipRow}>
+            {TYPES.map(t => (
+              <TouchableOpacity
+                key={t}
+                style={[styles.chip, hType === t && styles.chipActive]}
+                onPress={() => setHType(t)}
+              >
+                <Text style={[styles.chipText, hType === t && styles.chipTextActive]}>{t}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </MotiView>
+      )}
+    </AnimatePresence>
+  </View>
+);
+
+export default function List() {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const [coords, setCoords] = useState(route.params?.coords || null);
+  const [query, setQuery] = useState(route.params?.q || '');
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+  const [showFilters, setShowFilters] = useState(false);
+  const [radiusKm, setRadiusKm] = useState(10);
+  const [hType, setHType] = useState('All');
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [locLoading, setLocLoading] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [favIds, setFavIds] = useState([]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedQuery(query), 500);
+    return () => clearTimeout(handler);
+  }, [query]);
+
+  useEffect(() => { (async () => setFavIds(await getFavoriteIds()))(); }, []);
+
+  useEffect(() => {
+    if (!coords) {
+      (async () => {
+        setLocLoading(true);
+        try {
+          const { status } = await Location.getForegroundPermissionsAsync();
+          if (status !== 'granted') {
+            const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
+            if (newStatus !== 'granted') {
+              Alert.alert('Permission Denied', 'Please enable location permissions.');
+              setLocLoading(false);
+              return;
+            }
+          }
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          setCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setLocLoading(false);
+        }
+      })();
+    }
+  }, [coords]);
+
+  const fetchNearby = useCallback(async () => {
+    try {
+      setLoading(true);
+      if (!coords?.lat || !coords?.lng) {
+        setLoading(false);
+        return;
+      }
+      const osmHospitals = await discoverHospitals(coords.lat, coords.lng, radiusKm);
+      const { data: dbHospitals, error } = await supabase.rpc('nearby_hospitals', {
+        user_lat: coords.lat,
+        user_lng: coords.lng,
+        radius_km: parseFloat(radiusKm)
+      });
+
+      const combined = [...(dbHospitals || [])];
+      const dbNames = new Set(combined.map(h => h.name.toLowerCase()));
+
+      osmHospitals.forEach(oh => {
+        if (!dbNames.has(oh.name.toLowerCase())) {
+          combined.push({
+            ...oh,
+            id: `osm-${oh.lat}-${oh.lng}`,
+            bed_av_icu: 0,
+            bed_av_oxygen: 0,
+            bed_av_general: 0,
+            in_db: false
+          });
+        }
+      });
+
+      let list = combined;
+      const qstr = debouncedQuery.toLowerCase().trim();
+
+      // Filter by Type
+      if (hType !== 'All') {
+        list = list.filter(r => r.type === hType);
+      }
+
+      // Filter by Query
+      if (qstr) {
+        list = list.filter(r =>
+          r.name.toLowerCase().includes(qstr) ||
+          (r.address || '').toLowerCase().includes(qstr)
+        );
+      }
+
+      list.sort((a, b) => (a.distance_km || 999) - (b.distance_km || 999));
+      setRows(list);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [coords, radiusKm, debouncedQuery]);
+
+  useEffect(() => {
+    fetchNearby();
+    const sub = supabase.channel('hospitals-all').on('postgres_changes', { event: '*', schema: 'public', table: 'hospitals' }, () => fetchNearby()).subscribe();
+    return () => supabase.removeChannel(sub);
+  }, [fetchNearby]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchNearby();
+    setRefreshing(false);
+  };
+
+  const onDirection = useCallback((lat, lng) => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`), []);
+  const onFavPress = useCallback(async (id) => setFavIds(await toggleFavorite(id)), []);
+
+  const headerElement = (
+    <SearchHeader
+      query={query} setQuery={setQuery}
+      showFilters={showFilters} setShowFilters={setShowFilters}
+      radiusKm={radiusKm} setRadiusKm={setRadiusKm}
+      hType={hType} setHType={setHType}
+      showMap={showMap} setShowMap={setShowMap}
+    />
+  );
+
+  if (locLoading && !coords) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Detecting location...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {showMap ? (
+        <View style={{ flex: 1 }}>
+          {headerElement}
+          <MapComponent userLocation={coords} hospitals={rows} />
+        </View>
+      ) : (
+        <FlatList
+          data={loading ? [1, 2, 3, 4] : rows}
+          keyExtractor={(item, index) => loading ? `skel-${index}` : item.id}
+          renderItem={({ item, index }) => loading ? (
+            <SkeletonCard />
+          ) : (
+            <HospitalCard
+              item={item}
+              favIds={favIds}
+              index={index}
+              navigation={navigation}
+              onFavPress={onFavPress}
+              onDirection={onDirection}
+            />
+          )}
+          ListHeaderComponent={headerElement}
+          ListEmptyComponent={!loading && <View style={styles.empty}><Text style={styles.emptyText}>No facilities found in this area.</Text></View>}
+          contentContainerStyle={{ padding: Sp.md }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        />
+      )}
+    </View>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <View style={styles.skelCard}>
+      <Skeleton width="60%" height={24} style={{ marginBottom: 8 }} />
+      <Skeleton width="40%" height={14} style={{ marginBottom: 16 }} />
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <Skeleton width="30%" height={40} />
+        <Skeleton width="30%" height={40} />
+        <Skeleton width="30%" height={40} />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loadingText: { marginTop: 12, color: Colors.sub, fontWeight: '600' },
+  flex: { flex: 1 },
+  row: { flexDirection: 'row', alignItems: 'center' },
+
+  header: { marginBottom: Sp.md },
+  searchRow: { flexDirection: 'row', gap: 10 },
+  searchBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: Radii.md,
+    paddingHorizontal: 12,
+    height: 52,
+    ...Shadows.sm
+  },
+  input: { flex: 1, marginLeft: 8, fontSize: 16, color: Colors.text, height: '100%' },
+  iconBtn: {
+    width: 52,
+    height: 52,
+    backgroundColor: '#fff',
+    borderRadius: Radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.sm
+  },
+  iconBtnActive: { backgroundColor: Colors.primary },
+
+  filterBox: { overflow: 'hidden', paddingHorizontal: 4 },
+  filterTitle: { fontSize: 11, fontWeight: '900', color: Colors.sub, letterSpacing: 1.5, marginTop: 16, marginBottom: 8 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: Radii.pill, backgroundColor: '#fff', ...Shadows.sm },
+  chipActive: { backgroundColor: Colors.primary },
+  chipText: { fontSize: 13, fontWeight: '700', color: Colors.text },
+  chipTextActive: { color: '#fff' },
+
+  card: { marginBottom: Sp.md, padding: Sp.md },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Sp.sm },
+  cardName: { fontSize: Typo.h2, fontWeight: '800', color: Colors.text },
+  cardAddr: { fontSize: 13, color: Colors.sub, marginLeft: 4 },
+
+  statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Sp.md },
+  distText: { fontSize: 12, fontWeight: '700', color: Colors.primary },
+
+  statsGrid: { flexDirection: 'row', gap: 12, marginBottom: Sp.md },
+  statBox: { flex: 1, padding: 12, borderRadius: Radii.md, backgroundColor: Colors.bg, alignItems: 'center' },
+  statLabel: { fontSize: 10, fontWeight: '900', color: Colors.sub, marginBottom: 4 },
+  statCount: { fontSize: 18, fontWeight: '900' },
+
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: Colors.line,
+    paddingTop: Sp.sm
+  },
+  dirBtn: { flexDirection: 'row', alignItems: 'center' },
+  dirBtnText: { marginLeft: 6, fontSize: 14, fontWeight: '700', color: Colors.primary },
+
+  skelCard: { backgroundColor: '#fff', borderRadius: Radii.lg, padding: 16, marginBottom: 12, ...Shadows.sm },
+  empty: { padding: 80, alignItems: 'center' },
+  emptyText: { color: Colors.sub, fontSize: 16, textAlign: 'center' }
+});
+</file>
+
+<file path="screens/MapComponent.js">
+// screens/MapComponent.js
+import React, { useMemo } from 'react';
+import { View, StyleSheet, Platform } from 'react-native';
+import { WebView } from 'react-native-webview';
+
+export default function MapComponent({ userLocation, hospitals }) {
+    const html = useMemo(() => {
+        const centerLat = userLocation?.lat || 19.0760;
+        const centerLng = userLocation?.lng || 72.8777;
+
+        const markers = hospitals.map(h => `
+      L.marker([${h.lat}, ${h.lng}])
+        .bindPopup("<b>${h.name}</b><br>${h.address}<br>Beds: ${h.available_beds || 0}")
+        .addTo(map);
+    `).join('\n');
+
+        return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <style>
+          body { margin: 0; padding: 0; }
+          #map { height: 100vh; width: 100vw; }
+        </style>
+      </head>
+      <body>
+        <div id="map"></div>
+        <script>
+          const map = L.map('map').setView([${centerLat}, ${centerLng}], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+          }).addTo(map);
+
+          // User marker
+          L.circleMarker([${centerLat}, ${centerLng}], {
+            color: 'blue',
+            fillColor: '#30f',
+            fillOpacity: 0.5,
+            radius: 8
+          }).bindPopup("Your Location").addTo(map);
+
+          ${markers}
+        </script>
+      </body>
+      </html>
+    `;
+    }, [userLocation, hospitals]);
+
+    if (Platform.OS === 'web') {
+        return (
+            <View style={styles.container}>
+                <iframe
+                    srcDoc={html}
+                    style={{ width: '100%', height: '100%', border: 'none' }}
+                    title="Map"
+                />
+            </View>
+        );
+    }
+
+    return (
+        <View style={styles.container}>
+            <WebView
+                originWhitelist={['*']}
+                source={{ html }}
+                style={styles.map}
+            />
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#eee' },
+    map: { flex: 1 }
+});
+</file>
+
+<file path="screens/MyBookings.js">
+// screens/MyBookings.js
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
+import { supabase } from '../supabase';
+import { useAuth } from './auth/AuthProvider';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { Card, Badge, Skeleton } from './ui/kit';
+
+export default function MyBookings() {
+    const { user } = useAuth();
+    const [bookings, setBookings] = useState([]);
+    const [emergencies, setEmergencies] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchAll = async (showLoading = false) => {
+        if (!user) return;
+        if (showLoading) setLoading(true);
+
+        const [bRes, eRes] = await Promise.all([
+            supabase.from('bookings').select('*, hospitals(name, phone, address)').eq('user_id', user.id).order('created_at', { ascending: false }),
+            supabase.from('emergency_requests').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+        ]);
+
+        if (!bRes.error) setBookings(bRes.data || []);
+        else console.error('Bookings Fetch Error:', bRes.error);
+
+        if (!eRes.error) setEmergencies(eRes.data || []);
+        else console.error('Emergencies Fetch Error:', eRes.error);
+
+        setLoading(false);
+        setRefreshing(false);
+    };
+
+    useEffect(() => {
+        fetchAll(true);
+        const bSub = supabase.channel(`my-bookings-${user?.id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `user_id=eq.${user?.id}` }, () => fetchAll()).subscribe();
+        const eSub = supabase.channel(`my-emergencies-${user?.id}`).on('postgres_changes', { event: '*', schema: 'public', table: 'emergency_requests', filter: `user_id=eq.${user?.id}` }, () => fetchAll()).subscribe();
+
+        return () => {
+            supabase.removeChannel(bSub);
+            supabase.removeChannel(eSub);
+        };
+    }, [user]);
+
+    const renderItem = ({ item, index }) => {
+        const tone = item.status === 'CONFIRMED' ? 'good' : item.status === 'PENDING' ? 'warn' : 'bad';
+        const icon = item.status === 'CONFIRMED' ? 'check-circle' : item.status === 'PENDING' ? 'clock-outline' : 'close-circle';
+
+        return (
+            <MotiView
+                from={{ opacity: 0, translateX: -20 }}
+                animate={{ opacity: 1, translateX: 0 }}
+                transition={{ type: 'timing', duration: 400, delay: index * 100 }}
+            >
+                <Card style={s.card}>
+                    <View style={s.cardHeader}>
+                        <View style={s.iconCircle}>
+                            <MaterialCommunityIcons name="hospital-building" size={24} color={Colors.primary} />
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 12 }}>
+                            <Text style={s.hName}>{item.hospitals?.name}</Text>
+                            <Text style={s.hAddr} numberOfLines={1}>{item.hospitals?.address}</Text>
+                        </View>
+                        <Badge tone={tone}>{item.status}</Badge>
+                    </View>
+
+                    <View style={s.divider} />
+
+                    <View style={s.details}>
+                        <DetailItem icon="account" label="Patient" value={item.patient_name} />
+                        <DetailItem icon="bed-outline" label="Bed Type" value={item.bed_type} />
+                        <DetailItem icon="calendar" label="Requested" value={new Date(item.created_at).toLocaleDateString()} />
+                    </View>
+
+                    {item.note && (
+                        <View style={s.noteBox}>
+                            <MaterialCommunityIcons name="message-text-outline" size={16} color={Colors.accent} />
+                            <Text style={s.noteText}>{item.note}</Text>
+                        </View>
+                    )}
+                </Card>
+            </MotiView>
+        );
+    };
+
+    if (loading) {
+        return (
+            <View style={s.container}>
+                <FlatList
+                    data={[1, 2, 3]}
+                    renderItem={() => (
+                        <View style={{ padding: 16 }}>
+                            <Skeleton width="100%" height={120} style={{ borderRadius: 16 }} />
+                        </View>
+                    )}
+                    keyExtractor={i => i.toString()}
+                />
+            </View>
+        );
+    }
+
+    const renderEmergency = ({ item, index }) => {
+        const tone = item.status === 'RESOLVED' ? 'good' : 'bad';
+        return (
+            <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 50 }}>
+                <Card style={[s.card, { borderColor: Colors.bad, borderLeftWidth: 4 }]}>
+                    <View style={s.cardHeader}>
+                        <View style={[s.iconCircle, { backgroundColor: Colors.bad + '10' }]}>
+                            <MaterialCommunityIcons name="alert-decagram" size={24} color={Colors.bad} />
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 12 }}>
+                            <Text style={[s.hName, { color: Colors.bad }]}>Emergency Alert: {item.nature_of_emergency}</Text>
+                            <Text style={s.hAddr} numberOfLines={1}>{item.location_text}</Text>
+                        </View>
+                        <Badge tone={tone}>{item.status}</Badge>
+                    </View>
+                    <View style={s.divider} />
+                    <View style={s.details}>
+                        <DetailItem icon="account" label="Patient" value={item.patient_name} />
+                        <DetailItem icon="alert-outline" label="Severity" value={item.severity} />
+                        <DetailItem icon="calendar" label="Broadcasted" value={new Date(item.created_at).toLocaleTimeString()} />
+                    </View>
+                </Card>
+            </MotiView>
+        );
+    };
+
+    return (
+        <View style={s.container}>
+            <FlatList
+                data={[...emergencies.map(e => ({ ...e, isEmergency: true })), ...bookings]}
+                keyExtractor={item => item.id}
+                renderItem={({ item, index }) => item.isEmergency ? renderEmergency({ item, index }) : renderItem({ item, index })}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchAll(false)} tintColor={Colors.primary} />}
+                contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+                ListEmptyComponent={
+                    <View style={s.empty}>
+                        <MaterialCommunityIcons name="clipboard-text-off-outline" size={64} color={Colors.sub + '40'} />
+                        <Text style={s.emptyTitle}>No Active Requests</Text>
+                        <Text style={s.emptySub}>Your bed booking history and active emergency alerts will appear here.</Text>
+                    </View>
+                }
+            />
+        </View>
+    );
+}
+
+function DetailItem({ icon, label, value }) {
+    return (
+        <View style={s.detailItem}>
+            <View style={s.row}>
+                <MaterialCommunityIcons name={icon} size={14} color={Colors.sub} />
+                <Text style={s.detailLabel}>{label}</Text>
+            </View>
+            <Text style={s.detailValue}>{value}</Text>
+        </View>
+    );
+}
+
+const s = StyleSheet.create({
+    container: { flex: 1, backgroundColor: Colors.bg },
+    card: { marginBottom: 16, padding: Sp.md },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: Sp.md },
+    iconCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primary + '10', alignItems: 'center', justifyContent: 'center' },
+    hName: { fontSize: 16, fontWeight: '800', color: Colors.text },
+    hAddr: { fontSize: 12, color: Colors.sub, marginTop: 2 },
+
+    divider: { height: 1, backgroundColor: Colors.line, marginBottom: Sp.md },
+
+    details: { flexDirection: 'row', justifyContent: 'space-between' },
+    detailItem: { flex: 1 },
+    row: { flexDirection: 'row', alignItems: 'center' },
+    detailLabel: { fontSize: 10, fontWeight: '900', color: Colors.sub, marginLeft: 4, textTransform: 'uppercase' },
+    detailValue: { fontSize: 14, fontWeight: '700', color: Colors.text, marginTop: 4 },
+
+    noteBox: {
+        marginTop: Sp.md,
+        backgroundColor: Colors.accent + '08',
+        padding: 12,
+        borderRadius: Radii.md,
+        flexDirection: 'row',
+        alignItems: 'flex-start'
+    },
+    noteText: { flex: 1, marginLeft: 8, fontSize: 13, color: Colors.text, fontStyle: 'italic' },
+
+    empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, marginTop: 100 },
+    emptyTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, marginTop: 16 },
+    emptySub: { fontSize: 14, color: Colors.sub, textAlign: 'center', marginTop: 8, lineHeight: 20 },
+});
+</file>
+
+<file path="screens/Profile.js">
+// screens/Profile.js
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Platform, Alert, ScrollView } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
+import { supabase } from '../supabase.js';
+import { useAuth } from './auth/AuthProvider';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { Card, PrimaryButton } from './ui/kit';
+
+export default function Profile({ navigation }) {
+  const { user, profile, loading: authLoading, refreshProfile } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [bloodGroup, setBloodGroup] = useState('');
+  const [address, setAddress] = useState('');
+
+  const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+  useEffect(() => {
+    // If AuthProvider is still determining user/profile, we wait
+    if (authLoading) return;
+
+    if (profile) {
+      setName(profile.full_name || '');
+      setPhone(profile.phone || '');
+      setBloodGroup(profile.blood_group || '');
+      setAddress(profile.address || '');
+    }
+    setLoading(false);
+  }, [profile, user, authLoading]);
+
+  const onSave = async () => {
+    try {
+      if (!user) return;
+      setBusy(true);
+      const payload = {
+        id: user.id,
+        full_name: name || null,
+        phone: phone || null,
+        blood_group: bloodGroup || null,
+        address: address || null,
+      };
+      const { error } = await supabase.from('profiles').upsert(payload);
+      if (error) throw error;
+      await refreshProfile();
+      Alert.alert('Settings Saved', 'Your preferences have been synchronized across all devices.');
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  if (loading) return <View style={s.center}><ActivityIndicator color={Colors.primary} /></View>;
+
+  return (
+    <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      <MotiView from={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <View style={s.profileHeader}>
+          <View style={s.avatar}>
+            <MaterialCommunityIcons name="account-circle" size={80} color={Colors.primary} />
+          </View>
+          <Text style={s.emailText}>{user?.email}</Text>
+          <Text style={s.roleText}>Verified Medical Citizen</Text>
+        </View>
+
+        <Card style={s.card}>
+          <Text style={s.secTitle}>Personal Details</Text>
+
+          <View style={s.inputGroup}>
+            <Text style={s.label}>Full Name</Text>
+            <View style={s.inputWrap}>
+              <MaterialCommunityIcons name="account-outline" size={18} color={Colors.sub} />
+              <TextInput style={s.input} value={name} onChangeText={setName} placeholder="Your Name" />
+            </View>
+          </View>
+
+          <View style={s.inputGroup}>
+            <Text style={s.label}>Phone</Text>
+            <View style={s.inputWrap}>
+              <MaterialCommunityIcons name="phone-outline" size={18} color={Colors.sub} />
+              <TextInput style={s.input} value={phone} onChangeText={setPhone} placeholder="Primary Contact" keyboardType="phone-pad" />
+            </View>
+          </View>
+
+          <Text style={s.label}>Blood Group</Text>
+          <View style={s.chipRow}>
+            {bloodGroups.map(bg => (
+              <TouchableOpacity key={bg} onPress={() => setBloodGroup(bg)} style={[s.chip, bloodGroup === bg && s.chipActive]}>
+                <Text style={[s.chipText, bloodGroup === bg && s.chipTextActive]}>{bg}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={s.inputGroup}>
+            <Text style={s.label}>Home Address</Text>
+            <View style={[s.inputWrap, { height: 80, alignItems: 'flex-start', paddingTop: 10 }]}>
+              <MaterialCommunityIcons name="map-marker-outline" size={18} color={Colors.sub} />
+              <TextInput style={[s.input, { textAlignVertical: 'top' }]} value={address} onChangeText={setAddress} placeholder="Address for emergency use" multiline />
+            </View>
+          </View>
+
+          <PrimaryButton
+            title="Update Profile"
+            onPress={onSave}
+            busy={busy}
+            style={{ marginTop: Sp.md }}
+          />
+        </Card>
+
+        <Card style={[s.card, { marginTop: Sp.md }]}>
+          <Text style={s.secTitle}>Account Management</Text>
+
+          <MenuOption
+            icon="shield-account-outline"
+            label="Staff Portal Access"
+            onPress={() => navigation.navigate('StaffDashboard')}
+          />
+          <MenuOption
+            icon="hospital-marker"
+            label="Hospital Registry"
+            onPress={() => navigation.navigate('GeneralHospitals')}
+          />
+          <MenuOption
+            icon="alert-decagram-outline"
+            label="Emergency Protocol"
+            onPress={() => navigation.navigate('EmergencyRequest')}
+          />
+
+          <View style={s.divider} />
+
+          <TouchableOpacity style={s.logoutBtn} onPress={onLogout}>
+            <MaterialCommunityIcons name="logout" size={20} color={Colors.bad} />
+            <Text style={s.logoutText}>Sign Out Account</Text>
+          </TouchableOpacity>
+        </Card>
+      </MotiView>
+      <View style={{ height: 40 }} />
+    </ScrollView>
+  );
+}
+
+function MenuOption({ icon, label, onPress }) {
+  return (
+    <TouchableOpacity style={s.menuItem} onPress={onPress}>
+      <View style={s.menuLeft}>
+        <View style={s.menuIcon}>
+          <MaterialCommunityIcons name={icon} size={20} color={Colors.primary} />
+        </View>
+        <Text style={s.menuLabel}>{label}</Text>
+      </View>
+      <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.sub} />
+    </TouchableOpacity>
+  );
+}
+
+const s = StyleSheet.create({
+  wrap: { flex: 1, backgroundColor: Colors.bg },
+  content: { padding: Sp.md },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  profileHeader: { alignItems: 'center', paddingVertical: Sp.lg },
+  avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', ...Shadows.sm, marginBottom: 12 },
+  emailText: { fontSize: 16, fontWeight: '800', color: Colors.text },
+  roleText: { fontSize: 12, color: Colors.accent, fontWeight: '700', marginTop: 4 },
+
+  card: { padding: Sp.lg },
+  secTitle: { fontSize: 18, fontWeight: '900', color: Colors.text, marginBottom: Sp.md },
+  inputGroup: { marginBottom: 16 },
+  label: { fontSize: 11, fontWeight: '900', color: Colors.sub, textTransform: 'uppercase', marginBottom: 8, marginLeft: 2 },
+  inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderRadius: Radii.md, paddingHorizontal: 12, height: 48 },
+  input: { flex: 1, marginLeft: 10, fontSize: 15, fontWeight: '600', color: Colors.text },
+
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 16 },
+  chip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radii.pill, backgroundColor: Colors.bg },
+  chipActive: { backgroundColor: Colors.primary },
+  chipText: { fontSize: 12, color: Colors.sub, fontWeight: '800' },
+  chipTextActive: { color: '#fff' },
+
+  menuItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 },
+  menuLeft: { flexDirection: 'row', alignItems: 'center' },
+  menuIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.primary + '10', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  menuLabel: { fontSize: 14, fontWeight: '700', color: Colors.text },
+
+  divider: { height: 1, backgroundColor: Colors.line, marginVertical: 12 },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
+  logoutText: { marginLeft: 12, fontSize: 14, fontWeight: '800', color: Colors.bad }
+});
+</file>
+
+<file path="screens/StaffDashboard.js">
+// screens/StaffDashboard.js
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, RefreshControl, ActivityIndicator } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MotiView, AnimatePresence } from 'moti';
+import { supabase } from '../supabase.js';
+import { useAuth } from './auth/AuthProvider';
+import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
+import { Card, Badge, Skeleton } from './ui/kit';
+
+export default function StaffDashboard({ navigation }) {
+    const { user, profile } = useAuth();
+    const [requests, setRequests] = useState([]);
+    const [emergencyRequests, setEmergencyRequests] = useState([]);
+    const [refreshing, setRefreshing] = useState(false);
+    const [isStaff, setIsStaff] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (profile) {
+            const hasAccess = profile.role === 'staff' || profile.role === 'admin';
+            setIsStaff(hasAccess);
+            if (hasAccess) {
+                fetchRequests();
+                fetchEmergencies();
+            }
+            setLoading(false);
+        } else if (!user) {
+            setLoading(false);
+        }
+    }, [user, profile]);
+
+    const fetchRequests = async (showRefresh = true) => {
+        if (showRefresh) setRefreshing(true);
+        const { data, error } = await supabase
+            .from('bookings')
+            .select('*, profiles(full_name)')
+            .eq('status', 'PENDING')
+            .order('created_at', { ascending: true });
+
+        if (!error) setRequests(data || []);
+        setRefreshing(false);
+        setLoading(false);
+    };
+
+    const fetchEmergencies = async () => {
+        const { data, error } = await supabase
+            .from('emergency_requests')
+            .select('*')
+            .eq('status', 'OPEN')
+            .order('created_at', { ascending: false });
+
+        if (!error) setEmergencyRequests(data || []);
+    };
+
+    useEffect(() => {
+        if (!user || !isStaff) return;
+        const bookingsSub = supabase.channel('staff-portal-bookings').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bookings' }, () => fetchRequests(false)).subscribe();
+        const emergencySub = supabase.channel('staff-portal-emergencies').on('postgres_changes', { event: '*', schema: 'public', table: 'emergency_requests' }, () => fetchEmergencies()).subscribe();
+
+        return () => {
+            supabase.removeChannel(bookingsSub);
+            supabase.removeChannel(emergencySub);
+        };
+    }, [user, isStaff]);
+
+    const updateStatus = async (booking, newStatus) => {
+        try {
+            if (newStatus === 'CONFIRMED') {
+                const { error } = await supabase.rpc('confirm_booking', {
+                    booking_id: booking.id,
+                    h_id: booking.hospital_id,
+                    b_type: booking.bed_type
+                });
+                if (error) throw error;
+            } else {
+                const { error } = await supabase.from('bookings').update({ status: newStatus }).eq('id', booking.id);
+                if (error) throw error;
+            }
+            fetchRequests(false);
+        } catch (error) {
+            Alert.alert('Error', error.message);
+        }
+    };
+
+    const resolveEmergency = async (id) => {
+        const { error } = await supabase.from('emergency_requests').update({ status: 'RESOLVED' }).eq('id', id);
+        if (error) Alert.alert('Error', error.message);
+        else fetchEmergencies();
+    };
+
+    const renderEmergency = ({ item }) => (
+        <MotiView
+            from={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={[s.card, { borderColor: Colors.bad, borderLeftWidth: 6 }]}
+        >
+            <View style={s.cardTop}>
+                <View style={s.patientInfo}>
+                    <Text style={[s.pName, { color: Colors.bad }]}>🚨 EMERGENCY: {item.patient_name}</Text>
+                    <Text style={s.pAge}>{item.patient_age} Years • {item.severity} severity</Text>
+                </View>
+                <Badge tone="bad">CRITICAL</Badge>
+            </View>
+
+            <View style={s.conditionBox}>
+                <Text style={[s.conditionLabel, { color: Colors.bad }]}>NATURE OF EMERGENCY</Text>
+                <Text style={s.conditionText}>{item.nature_of_emergency}</Text>
+                <Text style={[s.conditionLabel, { marginTop: 8, color: Colors.bad }]}>LOCATION</Text>
+                <Text style={s.conditionText}>{item.location_text}</Text>
+            </View>
+
+            <View style={s.contactStrip}>
+                <MaterialCommunityIcons name="phone-incoming" size={16} color={Colors.bad} />
+                <Text style={[s.phoneText, { color: Colors.bad }]}>{item.contact_number}</Text>
+            </View>
+
+            <TouchableOpacity style={[s.actionBtn, { backgroundColor: Colors.bad }]} onPress={() => resolveEmergency(item.id)}>
+                <Text style={s.acceptText}>Mark as Resolved</Text>
+            </TouchableOpacity>
+        </MotiView>
+    );
+
+    const renderItem = ({ item, index }) => (
+        <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 50 }}>
+            <Card style={s.card}>
+                <View style={s.cardTop}>
+                    <View style={s.patientInfo}>
+                        <Text style={s.pName}>{item.patient_name}</Text>
+                        <Text style={s.pAge}>{item.age} Years • {item.bed_type} Bed</Text>
+                    </View>
+                    <View style={s.timeBox}>
+                        <MaterialCommunityIcons name="clock-outline" size={14} color={Colors.sub} />
+                        <Text style={s.timeText}>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                    </View>
+                </View>
+
+                <View style={s.conditionBox}>
+                    <Text style={s.conditionLabel}>CONDITION</Text>
+                    <Text style={s.conditionText} numberOfLines={2}>{item.condition || 'Priority admission requested'}</Text>
+                </View>
+
+                <View style={s.contactStrip}>
+                    <MaterialCommunityIcons name="phone" size={16} color={Colors.primary} />
+                    <Text style={s.phoneText}>{item.contact_phone}</Text>
+                </View>
+
+                <View style={s.actionRow}>
+                    <TouchableOpacity style={[s.actionBtn, s.rejectBtn]} onPress={() => updateStatus(item, 'REJECTED')}>
+                        <Text style={s.rejectText}>Decline</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[s.actionBtn, s.acceptBtn]} onPress={() => updateStatus(item, 'CONFIRMED')}>
+                        <Text style={s.acceptText}>Confirm Bed</Text>
+                    </TouchableOpacity>
+                </View>
+            </Card>
+        </MotiView>
+    );
+
+    if (loading) return <View style={s.center}><ActivityIndicator color={Colors.primary} /></View>;
+
+    if (!isStaff) {
+        return (
+            <View style={s.center}>
+                <MaterialCommunityIcons name="lock-alert" size={64} color={Colors.bad} />
+                <Text style={s.unauthTitle}>Restricted Access</Text>
+                <Text style={s.unauthSub}>This area is reserved for authorized medical hospital staff only.</Text>
+            </View>
+        );
+    }
+
+    return (
+        <View style={s.container}>
+            <View style={s.header}>
+                <View>
+                    <Text style={s.hTitle}>Staff Portal</Text>
+                    <Badge tone="warn">{requests.length} Bed Requests</Badge>
+                </View>
+                <TouchableOpacity style={s.addBtn} onPress={() => navigation.navigate('AddHospital')}>
+                    <MaterialCommunityIcons name="plus" size={20} color="#fff" />
+                    <Text style={s.addBtnText}>Facility</Text>
+                </TouchableOpacity>
+            </View>
+
+            <FlatList
+                data={requests}
+                keyExtractor={i => i.id}
+                ListHeaderComponent={
+                    <View>
+                        {emergencyRequests.length > 0 && (
+                            <View style={{ marginBottom: 20 }}>
+                                <Text style={[s.sectionHeader, { color: Colors.bad }]}>URGENT DISPATCHES</Text>
+                                {emergencyRequests.map(er => (
+                                    <View key={er.id} style={{ marginBottom: 16 }}>
+                                        {renderEmergency({ item: er })}
+                                    </View>
+                                ))}
+                                <View style={s.divider} />
+                                <Text style={s.sectionHeader}>BED ADMISSION REQUESTS</Text>
+                            </View>
+                        )}
+                    </View>
+                }
+                renderItem={renderItem}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { fetchRequests(); fetchEmergencies(); }} tintColor={Colors.primary} />}
+                contentContainerStyle={{ padding: 16 }}
+                ListEmptyComponent={
+                    !emergencyRequests.length && (
+                        <View style={s.empty}>
+                            <MaterialCommunityIcons name="check-all" size={64} color={Colors.good + '40'} />
+                            <Text style={s.emptyTitle}>All Clear</Text>
+                            <Text style={s.emptySub}>No pending admission requests at the moment.</Text>
+                        </View>
+                    )
+                }
+            />
+        </View>
+    );
+}
+
+const s = StyleSheet.create({
+    container: { flex: 1, backgroundColor: Colors.bg },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+    unauthTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, marginTop: 16 },
+    unauthSub: { fontSize: 14, color: Colors.sub, textAlign: 'center', marginTop: 8 },
+
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: '#fff',
+        ...Shadows.sm
+    },
+    hTitle: { fontSize: 24, fontWeight: '900', color: Colors.text, marginBottom: 4 },
+    addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.primary, paddingVertical: 8, paddingHorizontal: 16, borderRadius: Radii.pill },
+    addBtnText: { color: '#fff', fontWeight: '800', marginLeft: 4 },
+    sectionHeader: { fontSize: 13, fontWeight: '900', color: Colors.sub, letterSpacing: 1, marginBottom: 12, marginLeft: 4 },
+    divider: { height: 1, backgroundColor: Colors.line, marginVertical: 20 },
+
+    card: { marginBottom: 16, padding: Sp.md },
+    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
+    pName: { fontSize: 18, fontWeight: '800', color: Colors.text },
+    pAge: { fontSize: 13, color: Colors.accent, fontWeight: '700', marginTop: 2 },
+    timeBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, padding: 6, borderRadius: 8 },
+    timeText: { fontSize: 11, fontWeight: '700', color: Colors.sub, marginLeft: 4 },
+
+    conditionBox: { backgroundColor: Colors.bg, padding: 12, borderRadius: 12, marginBottom: 12 },
+    conditionLabel: { fontSize: 10, fontWeight: '900', color: Colors.sub, letterSpacing: 1, marginBottom: 4 },
+    conditionText: { fontSize: 14, color: Colors.text, lineHeight: 18 },
+
+    contactStrip: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+    phoneText: { marginLeft: 8, fontSize: 14, fontWeight: '700', color: Colors.primary },
+
+    actionRow: { flexDirection: 'row', gap: 12 },
+    actionBtn: { flex: 1, height: 48, borderRadius: Radii.md, alignItems: 'center', justifyContent: 'center' },
+    rejectBtn: { backgroundColor: Colors.bg },
+    acceptBtn: { backgroundColor: Colors.good },
+    rejectText: { color: Colors.sub, fontWeight: '800' },
+    acceptText: { color: '#fff', fontWeight: '800' },
+
+    empty: { alignItems: 'center', marginTop: 100 },
+    emptyTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, marginTop: 16 },
+    emptySub: { fontSize: 14, color: Colors.sub, marginTop: 8 }
+});
+</file>
+
+<file path="screens/ui/cache.js">
+// screens/utils/cache.js
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const TTL_MS = 1000 * 60 * 10; // 10 minutes
+
+export async function cacheSet(key, value) {
+  try {
+    const payload = { value, ts: Date.now() };
+    await AsyncStorage.setItem(key, JSON.stringify(payload));
+  } catch {}
+}
+
+export async function cacheGet(key) {
+  try {
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) return null;
+    const { value, ts } = JSON.parse(raw);
+    if (Date.now() - ts > TTL_MS) return null;
+    return value;
+  } catch {
+    return null;
+  }
+}
+</file>
+
+<file path="screens/ui/i18n.js">
+// screens/utils/i18n.js
+let lang = 'en';
+
+const dict = {
+  en: {
+    search_placeholder: 'Search Location or Name',
+    nearby: 'Nearby Hospitals',
+  },
+  hi: {
+    search_placeholder: 'स्थान या नाम खोजें',
+    nearby: 'नज़दीकी अस्पताल',
+  },
+};
+
+export function t(key) {
+  const pack = dict[lang] || dict.en;
+  return pack[key] || key;
+}
+
+export function setLang(next) {
+  lang = ['en', 'hi'].includes(next) ? next : 'en';
+}
+
+export function getLang() {
+  return lang;
+}
+</file>
+
+<file path="screens/ui/kit.js">
+// screens/ui/kit.js
+import React, { useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Pressable, Dimensions } from 'react-native';
+import { MotiView, MotiText } from 'moti';
+import { Colors, Radii, Sp, Typo, Shadows } from './theme';
+
+const { width } = Dimensions.get('window');
+
+export function Card({ children, style, animate = true, onPress }) {
+  const content = (
+    <View style={[styles.card, style]}>
+      {children}
+    </View>
+  );
+
+  if (onPress) {
+    return (
+      <MotiView
+        from={{ scale: 1, rotateX: '0deg', rotateY: '0deg' }}
+        animate={{ scale: 1, rotateX: '0deg', rotateY: '0deg' }}
+        transition={{ type: 'spring', damping: 15 }}
+      >
+        <Pressable
+          onPress={onPress}
+          style={({ pressed }) => [
+            pressed && { transform: [{ scale: 0.98 }, { rotateX: '2deg' }, { rotateY: '1deg' }] }
+          ]}
+        >
+          {content}
+        </Pressable>
+      </MotiView>
+    );
+  }
+
+  return animate ? (
+    <MotiView
+      from={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'timing', duration: 500 }}
+    >
+      {content}
+    </MotiView>
+  ) : content;
+}
+
+export function PrimaryButton({ title, onPress, disabled, busy, style, icon }) {
+  return (
+    <TouchableOpacity
+      style={[styles.btn, disabled && { opacity: 0.5, backgroundColor: Colors.sub }, style]}
+      onPress={onPress}
+      disabled={disabled || busy}
+      activeOpacity={0.7}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+        {busy ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <>
+            {icon && <View style={{ marginRight: 8 }}>{icon}</View>}
+            <Text style={styles.btnText}>{title}</Text>
+          </>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+export function Badge({ tone = 'neutral', children, style }) {
+  const isGood = tone === 'good';
+  const isWarn = tone === 'warn';
+  const isBad = tone === 'bad';
+
+  const bg = isGood ? Colors.good + '15' : isWarn ? Colors.warn + '15' : isBad ? Colors.bad + '15' : Colors.accent;
+  const dotColor = isGood ? Colors.good : isWarn ? Colors.warn : isBad ? Colors.bad : Colors.primary;
+
+  return (
+    <View style={[styles.badge, { backgroundColor: bg }, style]}>
+      <View style={[styles.dot, { backgroundColor: dotColor }]} />
+      <Text style={[styles.badgeText, { color: dotColor }]}>{children}</Text>
+    </View>
+  );
+}
+
+export function Skeleton({ width: w = '100%', height: h = 20, style }) {
+  return (
+    <MotiView
+      from={{ opacity: 0.3 }}
+      animate={{ opacity: 0.7 }}
+      transition={{ loop: true, type: 'timing', duration: 1000, repeatReverse: true }}
+      style={[styles.skeleton, { width: w, height: h }, style]}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: Colors.card,
+    borderRadius: Radii.lg,
+    padding: Sp.md,
+    ...Shadows.md,
+    borderWidth: 1,
+    borderColor: Colors.line,
+  },
+  btn: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: Radii.md,
+    ...Shadows.sm,
+  },
+  btnText: { color: '#fff', fontWeight: '800', fontSize: 16, letterSpacing: 0.5 },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.02)'
+  },
+  dot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
+  badgeText: { fontWeight: '700', fontSize: Typo.small, textTransform: 'uppercase' },
+  skeleton: { backgroundColor: '#E2E8F0', borderRadius: Radii.sm },
+});
+</file>
+
+<file path="screens/ui/theme.js">
+// screens/ui/theme.js - Update with these exports:
+import { Appearance } from 'react-native';
+const scheme = 'light';
+
+export const Colors = {
+  primary: '#0F4C75', // Deep Ocean Blue
+  primaryLight: '#3282B8', // Serene Sky Blue
+  primaryDark: '#1B262C', // Midnight Slate
+  accent: '#BBE1FA', // Soft Mist Blue
+  bg: '#F8FAFC', // Near-white Slate (Ultra Clean)
+  card: '#FFFFFF',
+  text: '#1A202C', // Deep Slate Gray
+  sub: '#718096', // Mid Gray Slate
+  good: '#10B981', // Emerald Green
+  warn: '#F59E0B', // Amber Gold
+  bad: '#EF4444', // Rose Red
+  line: '#E2E8F0', // Light Slate Line
+};
+
+export const Radii = { sm: 6, md: 10, lg: 16, xl: 24, pill: 999 };
+export const Sp = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
+export const Typo = { h1: 28, h2: 20, body: 16, small: 13 };
+
+export const Shadows = {
+  sm: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
+  md: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4 },
+  lg: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 8 },
+};
+</file>
+
+<file path="screens/ui/toast.js">
+// screens/utils/toast.js
+import { Platform, ToastAndroid, Alert } from 'react-native';
+
+export function toast(msg) {
+  if (Platform.OS === 'android') {
+    ToastAndroid.show(msg, ToastAndroid.SHORT);
+  } else {
+    Alert.alert('', msg);
+  }
+}
+</file>
+
+<file path="screens/utils/cache.js">
+// screens/utils/cache.js
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const TTL_MS = 1000 * 60 * 10; // 10 minutes
+
+export async function cacheSet(key, value) {
+  try {
+    const payload = { value, ts: Date.now() };
+    await AsyncStorage.setItem(key, JSON.stringify(payload));
+  } catch {}
+}
+
+export async function cacheGet(key) {
+  try {
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) return null;
+    const { value, ts } = JSON.parse(raw);
+    if (Date.now() - ts > TTL_MS) return null;
+    return value;
+  } catch {
+    return null;
+  }
+}
+</file>
+
+<file path="screens/utils/favorites.js">
+import { supabase } from '../../supabase';
+
+// Read all favorite IDs for the current user
+export async function getFavoriteIds() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('favorites')
+    .select('hospital_id')
+    .eq('user_id', user.id);
+
+  if (error) return [];
+  return data.map(f => f.hospital_id);
+}
+
+// Check if one hospital is favorite
+export async function isFavorite(id) {
+  const ids = await getFavoriteIds();
+  return ids.includes(id);
+}
+
+// Add or remove (toggle) a hospital from favorites
+export async function toggleFavorite(hospitalId) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const ids = await getFavoriteIds();
+  const exists = ids.includes(hospitalId);
+
+  if (exists) {
+    await supabase.from('favorites').delete().eq('user_id', user.id).eq('hospital_id', hospitalId);
+  } else {
+    await supabase.from('favorites').insert({ user_id: user.id, hospital_id: hospitalId });
+  }
+
+  // Return updated list
+  return getFavoriteIds();
+}
+</file>
+
+<file path="screens/utils/FavoritesContext.js">
+// screens/utils/FavoritesContext.js
+import React, { createContext, useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const KEY = 'FAVORITE_HOSPITAL_IDS';
+export const FavoritesContext = createContext({
+  favIds: [],
+  toggle: async (id) => {},
+  isFav: (id) => false,
+  setFavs: (arr) => {}
+});
+
+export function FavoritesProvider({ children }) {
+  const [favIds, setFavIds] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const s = await AsyncStorage.getItem(KEY);
+        setFavIds(s ? JSON.parse(s) : []);
+      } catch (e) {
+        console.warn('Fav load failed', e.message);
+      }
+    })();
+  }, []);
+
+  const persist = useCallback(async (ids) => {
+    try {
+      await AsyncStorage.setItem(KEY, JSON.stringify(ids));
+    } catch (e) {
+      console.warn('Fav save failed', e.message);
+    }
+  }, []);
+
+  const toggle = useCallback(async (id) => {
+    setFavIds((prev) => {
+      const copy = Array.isArray(prev) ? [...prev] : [];
+      const i = copy.indexOf(id);
+      if (i === -1) copy.push(id);
+      else copy.splice(i, 1);
+      persist(copy);
+      return copy;
+    });
+  }, [persist]);
+
+  const isFav = (id) => favIds.includes(id);
+
+  return (
+    <FavoritesContext.Provider value={{ favIds, toggle, isFav, setFavs: setFavIds }}>
+      {children}
+    </FavoritesContext.Provider>
+  );
+}
+</file>
+
+<file path="screens/utils/osm.js">
+// screens/utils/osm.js
+import { supabase } from '../../supabase';
+
+/**
+ * Fetches hospitals from OpenStreetMap (Overpass API) near a location.
+ * @param {number} lat 
+ * @param {number} lng 
+ * @param {number} radiusKm 
+ */
+export async function discoverHospitals(lat, lng, radiusKm = 10) {
+    try {
+        const radiusMeters = radiusKm * 1000;
+        const query = `
+      [out:json][timeout:25];
+      (
+        node["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
+        way["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
+        relation["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
+      );
+      out center;
+    `;
+        const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('OSM API Error:', response.status, text.slice(0, 100));
+            return [];
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.error('OSM API returned non-JSON:', contentType);
+            return [];
+        }
+
+        const data = await response.json();
+
+        const hospitals = (data.elements || []).map(el => {
+            const name = el.tags.name || 'Unnamed Hospital';
+            const address = el.tags['addr:street']
+                ? `${el.tags['addr:street']}, ${el.tags['addr:city'] || ''}`
+                : 'Address not available in OSM';
+
+            const phone = el.tags['contact:phone'] || el.tags.phone || null;
+
+            const hLat = el.lat || el.center?.lat;
+            const hLng = el.lon || el.center?.lon;
+
+            // Simple distance for sorting
+            const R = 6371;
+            const dLat = (hLat - lat) * Math.PI / 180;
+            const dLon = (hLng - lng) * Math.PI / 180;
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat * Math.PI / 180) * Math.cos(hLat * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distanceKm = Math.round(R * c * 10) / 10;
+
+            return {
+                name,
+                address,
+                phone,
+                lat: hLat,
+                lng: hLng,
+                distance_km: distanceKm,
+                type: 'General', // Default
+            };
+        });
+
+        // Synchronize found hospitals to Supabase
+        // We attempt to upsert them using name and location as a pseudo-unique key if id is missing
+        // For simplicity, we'll just insert non-existing ones
+        if (hospitals.length > 0) {
+            await syncHospitalsToSupabase(hospitals);
+        }
+
+        return hospitals;
+    } catch (error) {
+        console.error('OSM Discovery Error:', error);
+        return [];
+    }
+}
+
+async function syncHospitalsToSupabase(hospitals) {
+    try {
+        // Basic de-duplication strategy: Check if a hospital with same name exists near coords
+        // Or just try to insert and let RLS/Unique constraints handle it if defined.
+        // Since we don't have unique constraints on name, we'll do a soft-sync.
+
+        // For each discovered hospital, we add it to Supabase if it's not already there.
+        // This allows bed counts to be tracked.
+        for (const h of hospitals) {
+            const { data: existing } = await supabase
+                .from('hospitals')
+                .select('id')
+                .eq('name', h.name)
+                .gte('lat', h.lat - 0.001)
+                .lte('lat', h.lat + 0.001)
+                .maybeSingle();
+
+            if (!existing) {
+                await supabase.from('hospitals').insert(h);
+            }
+        }
+    } catch (e) {
+        console.error('Sync Error:', e);
+    }
+}
+</file>
+
+<file path="seed_basic.js">
+const { createClient } = require('@supabase/supabase-js');
+const url = 'https://dqntsaynyheialkhzegf.supabase.co';
+const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxbnRzYXlueWhlaWFsa2h6ZWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2MzA5ODcsImV4cCI6MjA3ODIwNjk4N30.jjo8tgku7OQ_hhcqEDTkwOovDS6T1AyytD-HibPSoVo';
+const supabase = createClient(url, key);
+
+const hospitals = [
+    {
+        name: "Apex Multispeciality Hospital",
+        address: "Borivali West, Mumbai",
+        lat: 19.2297,
+        lng: 72.8433,
+        type: "Pvt",
+        phone: "022 2890 1234",
+        bed_av_gen: 15,
+        bed_total_general: 50,
+        bed_av_oxygen: 8,
+        bed_total_oxygen: 20,
+        bed_av_icu: 4,
+        bed_total_icu: 10,
+        verified: true,
+        response_time_avg: 12
+    },
+    {
+        name: "Holy Family Hospital",
+        address: "Bandra West, Mumbai",
+        lat: 19.0544,
+        lng: 72.8294,
+        type: "Pvt",
+        phone: "022 2642 3282",
+        bed_av_gen: 25,
+        bed_total_general: 100,
+        bed_av_oxygen: 12,
+        bed_total_oxygen: 30,
+        bed_av_icu: 6,
+        bed_total_icu: 15,
+        verified: true,
+        response_time_avg: 10
+    },
+    {
+        name: "AIIMS Delhi",
+        address: "Ansari Nagar, New Delhi",
+        lat: 28.5672,
+        lng: 77.2100,
+        type: "Gov",
+        phone: "011 2658 8500",
+        bed_av_gen: 0,
+        bed_total_general: 500,
+        bed_av_oxygen: 5,
+        bed_total_oxygen: 200,
+        bed_av_icu: 0,
+        bed_total_icu: 100,
+        verified: true,
+        response_time_avg: 20
+    },
+    {
+        name: "Manipal Hospital",
+        address: "Old Airport Road, Bangalore",
+        lat: 12.9592,
+        lng: 77.6450,
+        type: "Pvt",
+        phone: "080 2502 4444",
+        bed_av_gen: 10,
+        bed_total_general: 150,
+        bed_av_oxygen: 20,
+        bed_total_oxygen: 50,
+        bed_av_icu: 5,
+        bed_total_icu: 20,
+        verified: true,
+        response_time_avg: 15
+    },
+    {
+        name: "Fortis Hospital",
+        address: "Mulund West, Mumbai",
+        lat: 19.1764,
+        lng: 72.9515,
+        type: "Pvt",
+        phone: "022 4111 4111",
+        bed_av_gen: 12,
+        bed_total_general: 80,
+        bed_av_oxygen: 10,
+        bed_total_oxygen: 25,
+        bed_av_icu: 2,
+        bed_total_icu: 10,
+        verified: true,
+        response_time_avg: 14
+    }
+];
+
+async function seedHospitals() {
+    console.log('Seeding hospitals...');
+
+    // Since I can't run SQL DDL via anon key usually, I'll try to insert what I can 
+    // and see if the user can add the columns or if I can find a way.
+    // Wait, if I'm an expert developer, I should check if there's a way to run SQL.
+    // Usually through an RPC if one exists.
+
+    // If lat/lng were missing from Column list, maybe I should check if they are in another table?
+    // But hospitals table usually has them.
+
+    // Let's try to insert with ONLY existing columns first to see if it works, 
+    // and if lat/lng are really missing.
+    const basicHospitals = hospitals.map(h => ({
+        name: h.name,
+        address: h.address,
+        type: h.type,
+        phone: h.phone,
+        bed_total_general: h.bed_total_general,
+        bed_total_oxygen: h.bed_total_oxygen,
+        bed_total_icu: h.bed_total_icu
+    }));
+
+    const { data, error } = await supabase.from('hospitals').insert(basicHospitals);
+    if (error) {
+        console.error('Error seeding hospitals:', error);
+    } else {
+        console.log('Basic hospitals seeded successfully!');
+    }
+}
+
+seedHospitals();
+</file>
+
+<file path="seed_fake_requests.js">
+const { createClient } = require('@supabase/supabase-js');
+const url = 'https://dqntsaynyheialkhzegf.supabase.co';
+const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxbnRzYXlueWhlaWFsa2h6ZWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2MzA5ODcsImV4cCI6MjA3ODIwNjk4N30.jjo8tgku7OQ_hhcqEDTkwOovDS6T1AyytD-HibPSoVo';
+const supabase = createClient(url, key);
+
+async function seedFakeRequests() {
+    console.log('Fetching user and hospitals...');
+
+    // Get the first user profile to use as the "current user" for testing
+    const { data: profiles, error: pError } = await supabase.from('profiles').select('id').limit(1);
+    if (pError || !profiles.length) {
+        console.error('No profiles found to seed requests for.');
+        return;
+    }
+    const userId = profiles[0].id;
+    console.log('Using User ID:', userId);
+
+    // Get some hospitals
+    const { data: hospitals, error: hError } = await supabase.from('hospitals').select('id, name').limit(3);
+    if (hError || !hospitals.length) {
+        console.error('No hospitals found to link requests to.');
+        return;
+    }
+
+    console.log('Inserting fake bookings...');
+    const fakeBookings = [
+        {
+            user_id: userId,
+            hospital_id: hospitals[0].id,
+            bed_type: 'ICU',
+            patient_name: 'Rahul Sharma',
+            age: 45,
+            contact_phone: '+91 9876543210',
+            condition: 'Severe breathlessness, suspected pneumonia',
+            status: 'PENDING'
+        },
+        {
+            user_id: userId,
+            hospital_id: hospitals[1 % hospitals.length].id,
+            bed_type: 'GENERAL',
+            patient_name: 'Anita Desai',
+            age: 32,
+            contact_phone: '+91 9123456789',
+            condition: 'Post-operative recovery',
+            status: 'CONFIRMED'
+        }
+    ];
+
+    const { error: bError } = await supabase.from('bookings').insert(fakeBookings);
+    if (bError) console.error('Error inserting bookings:', bError);
+    else console.log('Fake bookings added!');
+
+    console.log('Inserting fake emergency request...');
+    const fakeEmergency = {
+        user_id: userId,
+        patient_name: 'Old Man (Unknown)',
+        patient_age: '70',
+        severity: 'Critical',
+        nature_of_emergency: 'Possible Heart Attack / Cardiac Arrest',
+        location_text: 'Gate No. 3, Central Park, near the fountain',
+        contact_number: '+91 9988776655',
+        status: 'OPEN'
+    };
+
+    const { error: eError } = await supabase.from('emergency_requests').insert(fakeEmergency);
+    if (eError) console.error('Error inserting emergency:', eError);
+    else console.log('Fake emergency request added!');
+
+    console.log('Seeding complete!');
+}
+
+seedFakeRequests();
+</file>
+
+<file path="seed_hospitals.js">
+const { createClient } = require('@supabase/supabase-js');
+const url = 'https://dqntsaynyheialkhzegf.supabase.co';
+const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxbnRzYXlueWhlaWFsa2h6ZWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2MzA5ODcsImV4cCI6MjA3ODIwNjk4N30.jjo8tgku7OQ_hhcqEDTkwOovDS6T1AyytD-HibPSoVo';
+const supabase = createClient(url, key);
+
+const hospitals = [
+    {
+        name: "Apex Multispeciality Hospital",
+        address: "Borivali West, Mumbai",
+        lat: 19.2297,
+        lng: 72.8433,
+        type: "Pvt",
+        phone: "022 2890 1234",
+        bed_av_gen: 15,
+        bed_total_general: 50,
+        bed_av_oxygen: 8,
+        bed_total_oxygen: 20,
+        bed_av_icu: 4,
+        bed_total_icu: 10,
+        verified: true,
+        response_time_avg: 12
+    },
+    {
+        name: "Holy Family Hospital",
+        address: "Bandra West, Mumbai",
+        lat: 19.0544,
+        lng: 72.8294,
+        type: "Pvt",
+        phone: "022 2642 3282",
+        bed_av_gen: 25,
+        bed_total_general: 100,
+        bed_av_oxygen: 12,
+        bed_total_oxygen: 30,
+        bed_av_icu: 6,
+        bed_total_icu: 15,
+        verified: true,
+        response_time_avg: 10
+    },
+    {
+        name: "AIIMS Delhi",
+        address: "Ansari Nagar, New Delhi",
+        lat: 28.5672,
+        lng: 77.2100,
+        type: "Gov",
+        phone: "011 2658 8500",
+        bed_av_gen: 0,
+        bed_total_general: 500,
+        bed_av_oxygen: 5,
+        bed_total_oxygen: 200,
+        bed_av_icu: 0,
+        bed_total_icu: 100,
+        verified: true,
+        response_time_avg: 20
+    },
+    {
+        name: "Manipal Hospital",
+        address: "Old Airport Road, Bangalore",
+        lat: 12.9592,
+        lng: 77.6450,
+        type: "Pvt",
+        phone: "080 2502 4444",
+        bed_av_gen: 10,
+        bed_total_general: 150,
+        bed_av_oxygen: 20,
+        bed_total_oxygen: 50,
+        bed_av_icu: 5,
+        bed_total_icu: 20,
+        verified: true,
+        response_time_avg: 15
+    },
+    {
+        name: "Fortis Hospital",
+        address: "Mulund West, Mumbai",
+        lat: 19.1764,
+        lng: 72.9515,
+        type: "Pvt",
+        phone: "022 4111 4111",
+        bed_av_gen: 12,
+        bed_total_general: 80,
+        bed_av_oxygen: 10,
+        bed_total_oxygen: 25,
+        bed_av_icu: 2,
+        bed_total_icu: 10,
+        verified: true,
+        response_time_avg: 14
+    }
+];
+
+async function seedHospitals() {
+    console.log('Seeding hospitals...');
+    // Note: Standardizing column names based on logic in List.js (bed_av_general, bed_av_oxygen, bed_av_icu)
+    // Checking existing columns from previous dump: "bed_total_general", "bed_av_icu"
+    // I will map them as per the database schema if I can see it exactly, 
+    // but List.js used bed_av_general, bed_av_oxygen, bed_av_icu.
+
+    const formattedHospitals = hospitals.map(h => ({
+        name: h.name,
+        address: h.address,
+        lat: h.lat,
+        lng: h.lng,
+        type: h.type,
+        phone: h.phone,
+        bed_av_general: h.bed_av_gen,
+        bed_total_general: h.bed_total_general,
+        bed_av_oxygen: h.bed_av_oxygen,
+        bed_total_oxygen: h.bed_total_oxygen,
+        bed_av_icu: h.bed_av_icu,
+        bed_total_icu: h.bed_total_icu,
+        verified: h.verified,
+        response_time_avg: h.response_time_avg
+    }));
+
+    const { data, error } = await supabase.from('hospitals').insert(formattedHospitals);
+    if (error) {
+        console.error('Error seeding hospitals:', error);
+    } else {
+        console.log('Hospitals seeded successfully!');
+    }
+}
+
+seedHospitals();
+</file>
+
+<file path="supabase.js">
+import { createClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const anon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(url, anon, {
+    auth: {
+        storage: AsyncStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+    },
+});
+
+export default supabase;
+</file>
+
+<file path=".gitignore">
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
+</file>
+
+<file path="App.js">
+// App.js
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { View, Text, ActivityIndicator } from 'react-native';
+
+import Home from './screens/Home';
+import List from './screens/List';
+import Favorites from './screens/Favorites';
+import HospitalDetail from './screens/HospitalDetail';
+import FutureAvailability from './screens/FutureAvailability';
+import EmergencyRequest from './screens/EmergencyRequest'; // Renamed
+import BookingForm from './screens/BookingForm';
+import MyBookings from './screens/MyBookings';
+import StaffDashboard from './screens/StaffDashboard'; // New
+import Profile from './screens/Profile';
+import AddHospital from './screens/AddHospital';
+import GeneralHospitals from './screens/GeneralHospitals';
+
+import { AuthProvider, useAuth } from './screens/auth/AuthProvider';
+import SignIn from './screens/auth/SignIn';
+import SignUp from './screens/auth/SignUp';
+
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+const AuthStack = createNativeStackNavigator();
+
+function Tabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: true,
+        tabBarActiveTintColor: '#0B4D73',
+        tabBarInactiveTintColor: '#7aa3ba',
+        tabBarStyle: {
+          height: 64,
+          paddingBottom: 10,
+          paddingTop: 6,
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          position: 'absolute',
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={Home}
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="view-dashboard" color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="List"
+        component={List}
+        options={{
+          title: 'Hospitals',
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="hospital-building" color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="My Bookings"
+        component={MyBookings}
+        options={{
+          title: 'Requests',
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="clipboard-text-clock" color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="account-circle" color={color} size={size} />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+function AuthStackScreens() {
+  return (
+    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="SignIn" component={SignIn} />
+      <AuthStack.Screen name="SignUp" component={SignUp} />
+    </AuthStack.Navigator>
+  );
+}
+
+/**
+ * RootNavigator must be a component (not top-level hook) so useAuth()
+ * is always called while inside AuthProvider.
+ */
+function RootNavigator() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F4FBFF' }}>
+        <ActivityIndicator />
+        <Text style={{ marginTop: 8 }}>Loading…</Text>
+      </View>
+    );
+  }
+
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {user ? (
+        // Signed in -> show main app
+        <>
+          <Stack.Screen name="MainTabs" component={Tabs} />
+          <Stack.Screen name="HospitalDetail" component={HospitalDetail} options={{ headerShown: true, title: 'Details' }} />
+          <Stack.Screen name="FutureAvailability" component={FutureAvailability} options={{ headerShown: true, title: 'Future Availability' }} />
+          <Stack.Screen name="EmergencyRequest" component={EmergencyRequest} options={{ headerShown: true, title: 'Emergency Request' }} />
+          <Stack.Screen name="BookingForm" component={BookingForm} options={{ headerShown: true, title: 'Book Bed' }} />
+          <Stack.Screen name="StaffDashboard" component={StaffDashboard} options={{ headerShown: true, title: 'Staff Portal' }} />
+          <Stack.Screen name="AddHospital" component={AddHospital} options={{ headerShown: true, title: 'Register Hospital' }} />
+          <Stack.Screen name="GeneralHospitals" component={GeneralHospitals} options={{ headerShown: true, title: 'Hospital Registry' }} />
+        </>
+      ) : (
+        // Not signed in -> show auth flow
+        <Stack.Screen name="Auth" component={AuthStackScreens} />
+      )}
+    </Stack.Navigator>
+  );
+}
+
+export default function App() {
+  // AuthProvider wraps the whole app so useAuth() has a context inside RootNavigator
+  return (
+    <AuthProvider>
+      <NavigationContainer>
+        <RootNavigator />
+      </NavigationContainer>
+    </AuthProvider>
+  );
+}
+</file>
+
+<file path="app.json">
+{
+  "expo": {
+    "name": "Hospital Bed Finder",
+    "slug": "hospital-bed-finder",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "android": {
+      "package": "com.atharv30.hospitalbedfinder",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/1cfd0724-08ab-426f-be85-e1d082f41e2d"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1cfd0724-08ab-426f-be85-e1d082f41e2d"
+      }
+    },
+    "ios": {},
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
+</file>
+
+<file path="package.json">
+{
+  "name": "hospital-bed-finder",
+  "version": "1.0.0",
+  "private": true,
+  "license": "0BSD",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~6.1.2",
+    "@expo/vector-icons": "^15.0.3",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-navigation/bottom-tabs": "^7.8.4",
+    "@react-navigation/native": "^7.1.19",
+    "@react-navigation/native-stack": "^7.6.2",
+    "@supabase/supabase-js": "^2.80.0",
+    "expo": "~54.0.30",
+    "expo-dev-client": "~6.0.20",
+    "expo-font": "~14.0.10",
+    "expo-linking": "~8.0.11",
+    "expo-location": "~19.0.8",
+    "expo-status-bar": "~3.0.9",
+    "expo-updates": "~29.0.15",
+    "moti": "^0.30.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-gesture-handler": "~2.28.0",
+    "react-native-reanimated": "~4.1.1",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-web": "^0.21.0",
+    "react-native-webview": "13.15.0",
+    "react-native-worklets": "0.5.1"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "^20.0.2"
+  }
+}
+</file>
+
+<file path="README.md">
+# 🏥 Hospital Bed Finder
+
+A modern, real-time mobile application built with **React Native** and **Supabase** to help patients find and book hospital beds quickly during emergencies.
+
+## 🚀 Features
+
+- **Real-time Bed Availability:** View live updates on general, ICU, and oxygen bed availability across various hospitals.
+- **Location-based Search:** Automatically finds the nearest hospitals using GPS.
+- **Emergency Booking:** Quick request system for patients in urgent need.
+- **Staff Dashboard:** Dedicated interface for hospital staff to manage bed counts and patient requests.
+- **Distance Calculation:** Shows exactly how far each hospital is from your current location.
+- **Detailed Hospital Profiles:** Contact information, address, and specific bed distributions.
+
+## 🛠️ Tech Stack
+
+- **Frontend:** [React Native](https://reactnative.dev/) with [Expo](https://expo.dev/)
+- **Backend/Database:** [Supabase](https://supabase.com/) (PostgreSQL + Real-time)
+- **Navigation:** [React Navigation v7](https://reactnavigation.org/)
+- **Animations:** [Moti](https://moti.fyi/) & [Reanimated](https://docs.swmansion.com/react-native-reanimated/)
+- **Styling:** Vanilla CSS / React Native StyleSheet
+- **Location Services:** `expo-location`
+
+## 📦 Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/atharv3046/Hospital-Bed-Finder.git
+    cd Hospital-Bed-Finder
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Environment Variables:**
+    Create a `.env` file in the root directory and add your Supabase credentials:
+    ```env
+    EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+    EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
+
+4.  **Start the development server:**
+    ```bash
+    npx expo start
+    ```
+
+## 📱 Screens
+
+- **Home:** Overview and quick actions.
+- **Hospital List:** Searchable and sortable list of all registered hospitals.
+- **Hospital Details:** Comprehensive view of a single hospital.
+- **Booking/Request:** Simplified form for bed requests.
+- **Profile:** User settings and role management.
+
+## 📄 License
+
+This project is licensed under the **0BSD License**.
+</file>
+
+</files>

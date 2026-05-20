@@ -1,161 +1,215 @@
-// screens/FutureAvailability.js
+// screens/FutureAvailability.js — "Future Availability" request form
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View, Text, TouchableOpacity, StyleSheet, ScrollView,
+  Alert, TextInput, Platform, Modal,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { supabase } from '../supabase.js';
+import { useAuth } from './auth/AuthProvider';
 import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
-import { Card, PrimaryButton } from './ui/kit';
 
-export default function FutureAvailability({ navigation }) {
-  const [form, setForm] = useState({
-    requirement: 'ICU Bed',
-    location: '',
-    providerName: '',
-    date: '',
-    agreeTerms: true
-  });
+const REQUIREMENTS = ['Hospital Bed', 'ICU Bed', 'Oxygen Bed', 'Ventilator', 'Ambulance'];
+
+function DropdownPicker({ label, value, options, onChange }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={s.fieldWrap}>
+      <Text style={s.label}>{label}</Text>
+      <TouchableOpacity style={s.dropdown} onPress={() => setOpen(true)} activeOpacity={0.8}>
+        <Text style={s.dropdownVal}>{value}</Text>
+        <MaterialCommunityIcons name="chevron-down" size={20} color={Colors.primary} />
+      </TouchableOpacity>
+      <Modal visible={open} transparent animationType="fade">
+        <TouchableOpacity style={s.backdrop} onPress={() => setOpen(false)} activeOpacity={1}>
+          <View style={s.sheet}>
+            <Text style={s.sheetTitle}>{label}</Text>
+            {options.map(o => (
+              <TouchableOpacity
+                key={o}
+                style={[s.option, value === o && s.optionActive]}
+                onPress={() => { onChange(o); setOpen(false); }}
+              >
+                <Text style={[s.optionText, value === o && s.optionTextActive]}>{o}</Text>
+                {value === o && <MaterialCommunityIcons name="check" size={18} color={Colors.primary} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+}
+
+export default function FutureAvailability() {
+  const { user } = useAuth();
+  const [requirement, setRequirement] = useState('Hospital Bed');
+  const [location, setLocation] = useState('');
+  const [providerName, setProviderName] = useState('');
+  const [date, setDate] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const submitRequest = async () => {
-    if (!form.location || !form.date) {
-      Alert.alert('Required Fields', 'Please provide location and preferred date.');
-      return;
-    }
-    if (!form.agreeTerms) {
-      Alert.alert('Policy Agreement', 'You must agree to the data handling terms to proceed.');
-      return;
-    }
+  const submit = async () => {
+    if (!location.trim()) { Alert.alert('Missing', 'Please enter a location.'); return; }
+    if (!agreed) { Alert.alert('Terms', 'Please agree to the terms and conditions.'); return; }
 
     setLoading(true);
     try {
-      const { error } = await supabase.from('future_requests').insert({
-        requirement: form.requirement,
-        location_text: form.location,
-        hospital_id: null,
-        desired_date: form.date,
-        agree_terms: form.agreeTerms
+      const { error } = await supabase.from('future_availability_requests').insert({
+        user_id: user?.id,
+        requirement,
+        location_text: location.trim(),
+        provider_name: providerName.trim() || null,
+        requested_date: date.trim() || null,
       });
-
       if (error) throw error;
-
-      Alert.alert('Request Logged', 'We will notify you if a slot opens up on the requested date.', [
-        { text: 'DONE', onPress: () => navigation.goBack() }
-      ]);
-    } catch (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Request Sent ✅', 'Your future availability request has been submitted.');
+      setLocation('');
+      setProviderName('');
+      setDate('');
+      setAgreed(false);
+    } catch (e) {
+      Alert.alert('Error', e.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-        <MotiView from={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <View style={s.header}>
-            <View style={s.iconCircle}>
-              <MaterialCommunityIcons name="calendar-search" size={32} color={Colors.primary} />
-            </View>
-            <Text style={s.title}>Future Planning</Text>
-            <Text style={s.subtitle}>Reserve or track bed availability for planned medical procedures.</Text>
-          </View>
-        </MotiView>
+    <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
 
-        <Card style={s.card}>
-          <Text style={s.secTitle}>Inquiry Details</Text>
-
-          <View style={s.group}>
-            <Text style={s.label}>Medical Requirement</Text>
-            <View style={s.typeGrid}>
-              {['ICU Bed', 'Oxygen Bed', 'General'].map(v => (
-                <TouchableOpacity
-                  key={v}
-                  style={[s.typeBtn, form.requirement === v && s.typeActive]}
-                  onPress={() => setForm({ ...form, requirement: v })}
-                >
-                  <Text style={[s.typeText, form.requirement === v && s.typeTextActive]}>{v}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <FormInput label="Preferred Location" value={form.location} onChange={t => setForm({ ...form, location: t })} placeholder="City or Specific Hospital Area" icon="map-marker-outline" />
-          <FormInput label="Planned Date" value={form.date} onChange={t => setForm({ ...form, date: t })} placeholder="YYYY-MM-DD" icon="calendar-clock" />
-          <FormInput label="Preferred Facility (Optional)" value={form.providerName} onChange={t => setForm({ ...form, providerName: t })} placeholder="Search Hospital..." icon="hospital-building" />
-
-          <TouchableOpacity
-            style={s.termsRow}
-            onPress={() => setForm({ ...form, agreeTerms: !form.agreeTerms })}
-          >
-            <View style={[s.check, form.agreeTerms && s.checked]}>
-              {form.agreeTerms && <MaterialCommunityIcons name="check" size={14} color="#fff" />}
-            </View>
-            <Text style={s.termsText}>Agree to predictive data processing terms</Text>
-          </TouchableOpacity>
-
-          <PrimaryButton
-            title="Submit Planning Request"
-            onPress={submitRequest}
-            busy={loading}
-            style={{ marginTop: Sp.md }}
-          />
-        </Card>
-
-        <View style={s.infoBox}>
-          <MaterialCommunityIcons name="information-outline" size={18} color={Colors.accent} />
-          <Text style={s.infoText}>This is a predictive system. Confirmation is subject to discharge rates on the requested date.</Text>
+      {/* Header */}
+      <View style={s.headerRow}>
+        <View style={s.titleBlock}>
+          <Text style={s.title}>Future{'\n'}Availability</Text>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
-}
-
-function FormInput({ label, value, onChange, placeholder, icon, keyboardType = 'default' }) {
-  return (
-    <View style={s.group}>
-      <Text style={s.label}>{label}</Text>
-      <View style={s.inputWrap}>
-        <MaterialCommunityIcons name={icon} size={18} color={Colors.sub} />
-        <TextInput
-          style={s.input}
-          value={value}
-          onChangeText={onChange}
-          placeholder={placeholder}
-          placeholderTextColor={Colors.sub + '60'}
-          keyboardType={keyboardType}
-        />
+        <Text style={s.robotEmoji}>🤖</Text>
       </View>
-    </View>
+
+      {/* Form */}
+      <View style={s.form}>
+        <DropdownPicker
+          label="Requirement"
+          value={requirement}
+          options={REQUIREMENTS}
+          onChange={setRequirement}
+        />
+
+        <View style={s.fieldWrap}>
+          <Text style={s.label}>Location</Text>
+          <TextInput
+            style={s.input}
+            value={location}
+            onChangeText={setLocation}
+            placeholder="e.g. Dhayan Park"
+            placeholderTextColor={Colors.sub}
+          />
+        </View>
+
+        <View style={s.fieldWrap}>
+          <Text style={s.label}>Provider Name</Text>
+          <TextInput
+            style={s.input}
+            value={providerName}
+            onChangeText={setProviderName}
+            placeholder="e.g. Shreya Hospital"
+            placeholderTextColor={Colors.sub}
+          />
+        </View>
+
+        <View style={s.fieldWrap}>
+          <Text style={s.label}>Date</Text>
+          <View style={s.dateRow}>
+            <TextInput
+              style={[s.input, { flex: 1 }]}
+              value={date}
+              onChangeText={setDate}
+              placeholder="DD / MM / YYYY"
+              placeholderTextColor={Colors.sub}
+              keyboardType="numeric"
+            />
+            <MaterialCommunityIcons name="calendar-blank" size={22} color={Colors.primary} style={{ marginLeft: 10 }} />
+          </View>
+        </View>
+
+        {/* Terms */}
+        <TouchableOpacity style={s.termsRow} onPress={() => setAgreed(!agreed)} activeOpacity={0.7}>
+          <View style={[s.checkbox, agreed && s.checkboxChecked]}>
+            {agreed && <MaterialCommunityIcons name="check" size={14} color="#fff" />}
+          </View>
+          <Text style={s.termsText}>
+            I agree to{' '}
+            <Text style={s.termsLink}>Terms and conditions</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={{ flex: 1, minHeight: 40 }} />
+
+      {/* Make Request Button */}
+      <TouchableOpacity
+        style={[s.submitBtn, loading && { opacity: 0.6 }]}
+        onPress={submit}
+        disabled={loading}
+        activeOpacity={0.85}
+      >
+        <MaterialCommunityIcons name="message-text-outline" size={20} color="#fff" style={{ marginRight: 10 }} />
+        <Text style={s.submitText}>Make Request</Text>
+      </TouchableOpacity>
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: Colors.bg },
-  content: { padding: Sp.md },
-  header: { alignItems: 'center', paddingVertical: Sp.lg },
-  iconCircle: { width: 64, height: 64, borderRadius: 20, backgroundColor: Colors.primary + '10', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  title: { fontSize: 24, fontWeight: '900', color: Colors.text },
-  subtitle: { fontSize: 13, color: Colors.sub, textAlign: 'center', marginTop: 8, paddingHorizontal: 20, lineHeight: 20 },
+  content: { padding: Sp.lg, paddingTop: 60, flexGrow: 1 },
 
-  card: { padding: Sp.lg },
-  secTitle: { fontSize: Typo.h2, fontWeight: '800', color: Colors.text, marginBottom: Sp.md },
-  group: { marginBottom: Sp.md },
-  label: { fontSize: 11, fontWeight: '900', color: Colors.sub, textTransform: 'uppercase', marginBottom: 8, marginLeft: 2 },
-  inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderRadius: Radii.md, paddingHorizontal: 12, height: 50 },
-  input: { flex: 1, marginLeft: 10, fontSize: 15, fontWeight: '600', color: Colors.text },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: Sp.xl },
+  titleBlock: {},
+  title: { fontSize: 28, fontWeight: '900', color: Colors.primary, lineHeight: 34 },
+  robotEmoji: { fontSize: 64, marginTop: -10 },
 
-  typeGrid: { flexDirection: 'row', gap: 8 },
-  typeBtn: { flex: 1, height: 40, borderRadius: Radii.sm, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.line },
-  typeActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  typeText: { fontSize: 11, fontWeight: '800', color: Colors.sub },
-  typeTextActive: { color: '#fff' },
+  form: { gap: 0 },
 
-  termsRow: { flexDirection: 'row', alignItems: 'center', marginVertical: Sp.md },
-  check: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: Colors.primary, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
-  checked: { backgroundColor: Colors.primary },
-  termsText: { fontSize: 13, color: Colors.text, fontWeight: '600' },
+  fieldWrap: { marginBottom: Sp.md },
+  label: { fontSize: 12, fontWeight: '700', color: Colors.primary, marginBottom: 6, marginLeft: 2 },
+  dropdown: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#fff', borderRadius: Radii.md, height: 50,
+    paddingHorizontal: Sp.md, ...Shadows.sm,
+  },
+  dropdownVal: { fontSize: 15, color: Colors.text, fontWeight: '500' },
+  input: {
+    backgroundColor: '#fff', borderRadius: Radii.md, height: 50,
+    paddingHorizontal: Sp.md, fontSize: 15, color: Colors.text, ...Shadows.sm,
+  },
+  dateRow: { flexDirection: 'row', alignItems: 'center' },
 
-  infoBox: { flexDirection: 'row', padding: 16, backgroundColor: Colors.accent + '10', borderRadius: Radii.md, marginTop: Sp.lg, alignItems: 'center' },
-  infoText: { flex: 1, marginLeft: 12, fontSize: 12, color: Colors.accent, fontWeight: '600', lineHeight: 18 }
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: '#fff', borderTopLeftRadius: Radii.xl, borderTopRightRadius: Radii.xl, padding: Sp.lg },
+  sheetTitle: { fontSize: 16, fontWeight: '800', color: Colors.primary, marginBottom: Sp.md },
+  option: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: Colors.line },
+  optionActive: { backgroundColor: Colors.bg, borderRadius: Radii.sm, paddingHorizontal: Sp.sm },
+  optionText: { fontSize: 15, color: Colors.text },
+  optionTextActive: { fontWeight: '800', color: Colors.primary },
+
+  termsRow: { flexDirection: 'row', alignItems: 'center', marginTop: Sp.sm },
+  checkbox: {
+    width: 20, height: 20, borderRadius: 4,
+    borderWidth: 2, borderColor: Colors.primary,
+    alignItems: 'center', justifyContent: 'center', marginRight: 10,
+  },
+  checkboxChecked: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  termsText: { fontSize: 14, color: Colors.text },
+  termsLink: { color: Colors.primary, fontWeight: '700' },
+
+  submitBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: Colors.primary, borderRadius: Radii.xl, height: 58,
+    ...Shadows.md,
+  },
+  submitText: { color: '#fff', fontSize: 17, fontWeight: '800' },
 });

@@ -1,38 +1,66 @@
 // screens/HospitalDetail.js
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, ActivityIndicator, Alert, ScrollView, Dimensions } from 'react-native';
+import {
+  View, Text, StyleSheet, TouchableOpacity, Linking,
+  ActivityIndicator, Alert, ScrollView, Dimensions
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { supabase } from '../supabase.js';
 import { toggleFavorite, getFavoriteIds } from './utils/favorites.js';
 import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
-import { Card, Badge, Skeleton } from './ui/kit';
+import { Card, Badge, PrimaryButton } from './ui/kit';
 
 const { width } = Dimensions.get('window');
 
 export default function HospitalDetail({ route, navigation }) {
-  const { hospitalId } = route.params;
-  const [h, setH] = useState(null);
+  const { hospitalId, hospitalData } = route.params;
+  const [h, setH] = useState(hospitalData || null);
   const [favIds, setFavIds] = useState([]);
 
+  const isOsm = typeof hospitalId === 'string' && hospitalId.startsWith('osm-');
+
+  // Check if it looks like a valid UUID (basic format check)
+  const isValidUUID = !isOsm && /^[0-9a-f-]{36}$/i.test(hospitalId);
+
   useEffect(() => {
-    (async () => { setFavIds(await getFavoriteIds()); })();
+    if (isOsm) {
+      const name = hospitalData?.name || 'hospital';
+      const addr = hospitalData?.address || '';
+      const query = encodeURIComponent(`${name} hospital ${addr}`);
+      Linking.openURL(`https://www.google.com/search?q=${query}`);
+      navigation.goBack();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isOsm) {
+      (async () => { setFavIds(await getFavoriteIds()); })();
+    }
   }, []);
   const isFav = favIds.includes(hospitalId);
 
   const load = async () => {
+    // Never query Supabase if this isn't a valid UUID
+    if (!isValidUUID) return;
     const { data, error } = await supabase
       .from('hospitals')
       .select('*')
-      .eq('id', hospitalId).maybeSingle();
-
+      .eq('id', hospitalId)
+      .maybeSingle();
     if (error) Alert.alert('Error', error.message);
     setH(data);
   };
 
   useEffect(() => {
+    if (!isValidUUID) return;
     load();
-    const channel = supabase.channel(`hospital-detail-${hospitalId}`).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'hospitals', filter: `id=eq.${hospitalId}` }, () => load()).subscribe();
+    const channel = supabase
+      .channel(`hospital-detail-${hospitalId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'hospitals', filter: `id=eq.${hospitalId}`
+      }, () => load())
+      .subscribe();
     return () => supabase.removeChannel(channel);
   }, [hospitalId]);
 
@@ -51,18 +79,17 @@ export default function HospitalDetail({ route, navigation }) {
   return (
     <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
       {/* Hero Header */}
-      <MotiView
-        from={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        style={s.hero}
-      >
+      <MotiView from={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={s.hero}>
         <View style={s.heroOverlay}>
           <View style={s.heroHeader}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
               <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity onPress={onToggleFav} style={s.favBtn}>
-              <MaterialCommunityIcons name={isFav ? "heart" : "heart-outline"} size={26} color={isFav ? "#EF4444" : "#fff"} />
+              <MaterialCommunityIcons
+                name={isFav ? "heart" : "heart-outline"}
+                size={26} color={isFav ? "#EF4444" : "#fff"}
+              />
             </TouchableOpacity>
           </View>
           <View style={s.heroTitleBox}>
@@ -98,11 +125,21 @@ export default function HospitalDetail({ route, navigation }) {
           </Text>
           <View style={s.divider} />
           <InfoRow icon="phone" label="Emergency Contact" value={h.phone || 'Registry listing restricted'} />
-          <InfoRow icon="hospital-building" label="Facility Type" value={h.type === 'Pvt' ? 'Private General' : 'Government Public'} />
+          <InfoRow
+            icon="hospital-building"
+            label="Facility Type"
+            value={h.type === 'Pvt' ? 'Private' : h.type === 'Gov' ? 'Government' : 'Semi-Government'}
+          />
 
           <PrimaryButton
             title="GET DIRECTIONS"
-            onPress={() => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}`)}
+            onPress={() => {
+              if (h.lat && h.lng) {
+                Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}`);
+              } else {
+                Alert.alert('No Location', 'GPS coordinates not available for this hospital.');
+              }
+            }}
             style={{ marginTop: Sp.md, backgroundColor: Colors.primary + '15' }}
             icon={<MaterialCommunityIcons name="google-maps" size={20} color={Colors.primary} />}
           />
@@ -126,10 +163,7 @@ export default function HospitalDetail({ route, navigation }) {
           ))}
         </View>
 
-        <TouchableOpacity
-          style={s.futureBtn}
-          onPress={() => navigation.navigate('FutureAvailability')}
-        >
+        <TouchableOpacity style={s.futureBtn} onPress={() => navigation.navigate('FutureAvailability')}>
           <MaterialCommunityIcons name="calendar-clock" size={20} color="#fff" />
           <Text style={s.futureBtnText}>Check Historical Trends</Text>
         </TouchableOpacity>
@@ -153,7 +187,6 @@ function InfoRow({ icon, label, value }) {
 }
 
 function BedTile({ label, av = 0, total = 0, onBook }) {
-  const tone = av > 5 ? 'good' : av > 0 ? 'warn' : 'bad';
   return (
     <Card style={s.bedTile}>
       <Text style={s.bedLabel}>{label}</Text>
@@ -175,13 +208,7 @@ const s = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { padding: Sp.md },
 
-  hero: {
-    height: 240,
-    borderRadius: Radii.xl,
-    backgroundColor: Colors.primary,
-    overflow: 'hidden',
-    ...Shadows.lg
-  },
+  hero: { height: 240, borderRadius: Radii.xl, backgroundColor: Colors.primary, overflow: 'hidden', ...Shadows.lg },
   heroOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', padding: 20, justifyContent: 'space-between' },
   heroHeader: { flexDirection: 'row', justifyContent: 'space-between' },
   backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
@@ -218,14 +245,9 @@ const s = StyleSheet.create({
   tagText: { color: Colors.text, fontSize: 12, fontWeight: '700' },
 
   futureBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.accent,
-    marginTop: Sp.lg,
-    height: 56,
-    borderRadius: Radii.md,
-    ...Shadows.md
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: Colors.accent, marginTop: Sp.lg, height: 56,
+    borderRadius: Radii.md, ...Shadows.md
   },
   futureBtnText: { marginLeft: 10, color: '#fff', fontSize: 15, fontWeight: '800' }
 });

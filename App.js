@@ -4,43 +4,39 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 
 import Home from './screens/Home';
 import List from './screens/List';
-import Favorites from './screens/Favorites';
-import HospitalDetail from './screens/HospitalDetail';
 import FutureAvailability from './screens/FutureAvailability';
-import EmergencyRequest from './screens/EmergencyRequest'; // Renamed
-import BookingForm from './screens/BookingForm';
-import MyBookings from './screens/MyBookings';
-import StaffDashboard from './screens/StaffDashboard'; // New
-import Profile from './screens/Profile';
-import AddHospital from './screens/AddHospital';
-import GeneralHospitals from './screens/GeneralHospitals';
+import EmergencyRequest from './screens/EmergencyRequest';
+import HospitalDetail from './screens/HospitalDetail';
 
 import { AuthProvider, useAuth } from './screens/auth/AuthProvider';
 import SignIn from './screens/auth/SignIn';
 import SignUp from './screens/auth/SignUp';
 
+import { Colors, Radii, Shadows } from './screens/ui/theme';
+
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 const AuthStack = createNativeStackNavigator();
 
-function Tabs() {
+function Tabs({ navigation: tabsNav }) {
   return (
     <Tab.Navigator
       screenOptions={{
-        headerShown: true,
-        tabBarActiveTintColor: '#0B4D73',
-        tabBarInactiveTintColor: '#7aa3ba',
+        headerShown: false,
+        tabBarShowLabel: true,
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.sub,
         tabBarStyle: {
           height: 64,
-          paddingBottom: 10,
+          paddingBottom: 8,
           paddingTop: 6,
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-          position: 'absolute',
+          backgroundColor: '#fff',
+          borderTopWidth: 0,
+          ...Shadows.md,
         },
       }}
     >
@@ -48,32 +44,47 @@ function Tabs() {
         name="Home"
         component={Home}
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="view-dashboard" color={color} size={size} />,
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="home-outline" color={color} size={size} />
+          ),
         }}
       />
       <Tab.Screen
         name="List"
         component={List}
         options={{
-          title: 'Hospitals',
-          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="hospital-building" color={color} size={size} />,
+          title: 'Search',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="magnify" color={color} size={size} />
+          ),
         }}
       />
       <Tab.Screen
-        name="My Bookings"
-        component={MyBookings}
+        name="FutureAvailability"
+        component={FutureAvailability}
         options={{
-          title: 'Requests',
-          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="clipboard-text-clock" color={color} size={size} />,
+          title: 'Request',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="robot-outline" color={color} size={size} />
+          ),
         }}
       />
       <Tab.Screen
-        name="Profile"
-        component={Profile}
+        name="MakeRequest"
+        component={EmergencyRequest}
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="account-circle" color={color} size={size} />,
+          title: '',
+          tabBarIcon: () => null,
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              style={styles.makeRequestBtn}
+            >
+              <MaterialCommunityIcons name="message-text-outline" size={18} color="#fff" />
+              <Text style={styles.makeRequestText}>Make{'\n'}Request</Text>
+            </TouchableOpacity>
+          ),
         }}
       />
     </Tab.Navigator>
@@ -89,18 +100,14 @@ function AuthStackScreens() {
   );
 }
 
-/**
- * RootNavigator must be a component (not top-level hook) so useAuth()
- * is always called while inside AuthProvider.
- */
 function RootNavigator() {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F4FBFF' }}>
-        <ActivityIndicator />
-        <Text style={{ marginTop: 8 }}>Loading…</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg }}>
+        <ActivityIndicator color={Colors.primary} />
+        <Text style={{ marginTop: 8, color: Colors.sub }}>Loading…</Text>
       </View>
     );
   }
@@ -108,19 +115,21 @@ function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
-        // Signed in -> show main app
         <>
           <Stack.Screen name="MainTabs" component={Tabs} />
-          <Stack.Screen name="HospitalDetail" component={HospitalDetail} options={{ headerShown: true, title: 'Details' }} />
-          <Stack.Screen name="FutureAvailability" component={FutureAvailability} options={{ headerShown: true, title: 'Future Availability' }} />
-          <Stack.Screen name="EmergencyRequest" component={EmergencyRequest} options={{ headerShown: true, title: 'Emergency Request' }} />
-          <Stack.Screen name="BookingForm" component={BookingForm} options={{ headerShown: true, title: 'Book Bed' }} />
-          <Stack.Screen name="StaffDashboard" component={StaffDashboard} options={{ headerShown: true, title: 'Staff Portal' }} />
-          <Stack.Screen name="AddHospital" component={AddHospital} options={{ headerShown: true, title: 'Register Hospital' }} />
-          <Stack.Screen name="GeneralHospitals" component={GeneralHospitals} options={{ headerShown: true, title: 'Hospital Registry' }} />
+          <Stack.Screen
+            name="HospitalDetail"
+            component={HospitalDetail}
+            options={{
+              headerShown: true,
+              title: 'Hospital Details',
+              headerStyle: { backgroundColor: Colors.bg },
+              headerTintColor: Colors.primary,
+              headerTitleStyle: { fontWeight: '800' },
+            }}
+          />
         </>
       ) : (
-        // Not signed in -> show auth flow
         <Stack.Screen name="Auth" component={AuthStackScreens} />
       )}
     </Stack.Navigator>
@@ -128,7 +137,6 @@ function RootNavigator() {
 }
 
 export default function App() {
-  // AuthProvider wraps the whole app so useAuth() has a context inside RootNavigator
   return (
     <AuthProvider>
       <NavigationContainer>
@@ -138,3 +146,24 @@ export default function App() {
   );
 }
 
+const styles = StyleSheet.create({
+  makeRequestBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    marginVertical: 8,
+    marginRight: 10,
+    borderRadius: Radii.md,
+    paddingHorizontal: 10,
+    gap: 6,
+    ...Shadows.sm,
+  },
+  makeRequestText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 12,
+    lineHeight: 15,
+  },
+});

@@ -1,256 +1,194 @@
-// screens/List.js
-import { useEffect, useState, useCallback, memo } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Linking, Alert, RefreshControl, Dimensions, ActivityIndicator } from 'react-native';
+// screens/List.js — Hospital search with filter dropdowns
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import {
+  View, Text, FlatList, TouchableOpacity, StyleSheet,
+  TextInput, Linking, Alert, RefreshControl, Dimensions,
+  ActivityIndicator, Modal, ScrollView, Animated,
+} from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MotiView, AnimatePresence } from 'moti';
 import * as Location from 'expo-location';
 import { supabase } from '../supabase.js';
-import { toggleFavorite, getFavoriteIds } from './utils/favorites.js';
 import { discoverHospitals } from './utils/osm.js';
-import MapComponent from './MapComponent.js';
 import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
-import { Card, Badge, Skeleton } from './ui/kit';
 
 const { width } = Dimensions.get('window');
-const RADIUS_OPTIONS = [5, 10, 25, 50, 100];
-const TYPES = ['All', 'Pvt', 'Gov', 'Sem'];
 
-const HospitalCard = memo(({ item, favIds, navigation, onFavPress, onDirection, index }) => {
-  const isFav = favIds.includes(item.id);
+const REQUIREMENTS = ['Hospital Bed', 'ICU Bed', 'Oxygen Bed', 'Ventilator'];
+const BED_TYPES = ['All Types', 'General', 'Oxygen Bed', 'ICU'];
+const SPECIALISTS = ['All', 'Pulmonologist', 'Cardiologist', 'Neurologist', 'Orthopedist'];
+const DISTANCES = ['5 km²', '10 km²', '25 km²', '50 km²', '100 km²'];
+const HOSP_TYPES = ['All', 'Private', 'Government', 'Semi-Govt'];
+
+function DropdownPicker({ label, value, options, onChange }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={dp.wrap}>
+      <Text style={dp.label}>{label}</Text>
+      <TouchableOpacity style={dp.box} onPress={() => setOpen(true)} activeOpacity={0.8}>
+        <Text style={dp.value}>{value}</Text>
+        <MaterialCommunityIcons name="chevron-down" size={20} color={Colors.primary} />
+      </TouchableOpacity>
+      <Modal visible={open} transparent animationType="fade">
+        <TouchableOpacity style={dp.backdrop} onPress={() => setOpen(false)} activeOpacity={1}>
+          <View style={dp.sheet}>
+            <Text style={dp.sheetTitle}>{label}</Text>
+            {options.map(o => (
+              <TouchableOpacity
+                key={o}
+                style={[dp.option, value === o && dp.optionActive]}
+                onPress={() => { onChange(o); setOpen(false); }}
+              >
+                <Text style={[dp.optionText, value === o && dp.optionTextActive]}>{o}</Text>
+                {value === o && <MaterialCommunityIcons name="check" size={18} color={Colors.primary} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+}
+
+function HospitalCard({ item, navigation }) {
   const totalBeds = (item.bed_av_general || 0) + (item.bed_av_oxygen || 0) + (item.bed_av_icu || 0);
+  const bedColor = totalBeds > 10 ? Colors.good : totalBeds > 0 ? Colors.warn : Colors.bad;
+  const typeLabel = item.type === 'Pvt' ? 'Pvt.' : item.type === 'Gov' ? 'Gov.' : 'Sem.';
+  const isOsm = typeof item.id === 'string' && item.id.startsWith('osm-');
 
-  const statusTone = totalBeds > 10 ? 'good' : totalBeds > 0 ? 'warn' : 'bad';
-  const statusLabel = totalBeds > 10 ? 'Available' : totalBeds > 0 ? 'Limited' : 'Full';
+  const openHospital = () => {
+    if (isOsm) {
+      // OSM hospitals don't have Supabase data — open Google search
+      const query = encodeURIComponent(`${item.name} hospital ${item.address || ''}`);
+      Linking.openURL(`https://www.google.com/search?q=${query}`);
+    } else {
+      navigation.navigate('HospitalDetail', { hospitalId: item.id, hospitalData: item });
+    }
+  };
 
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: 20 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 400, delay: index * 100 }}
-    >
-      <Card
-        onPress={() => navigation.navigate('HospitalDetail', { hospitalId: item.id })}
-        style={styles.card}
-      >
-        <View style={styles.cardTop}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-            <View style={styles.row}>
-              <MaterialCommunityIcons name="map-marker-outline" size={14} color={Colors.sub} />
-              <Text style={styles.cardAddr} numberOfLines={1}>{item.address || 'Location data unavailable'}</Text>
-            </View>
-          </View>
-          <TouchableOpacity onPress={() => onFavPress(item.id)} hitSlop={10}>
-            <MaterialCommunityIcons
-              name={isFav ? "heart" : "heart-outline"}
-              size={24}
-              color={isFav ? "#EF4444" : Colors.sub}
-            />
-          </TouchableOpacity>
+    <TouchableOpacity style={hc.card} onPress={openHospital} activeOpacity={0.7}>
+      <View style={hc.row}>
+        <View style={{ flex: 1 }}>
+          <Text style={hc.name}>{item.name}</Text>
+          <Text style={hc.type}>{typeLabel}{isOsm ? ' • via OSM' : ''}</Text>
         </View>
-
-        <View style={styles.statusRow}>
-          <Badge tone={statusTone}>{statusLabel}</Badge>
-          <Text style={styles.distText}>
-            <MaterialCommunityIcons name="navigation-variant" size={12} color={Colors.primary} /> {item.distance_km ?? '?'} km
-          </Text>
-        </View>
-
-        <View style={styles.statsGrid}>
-          <StatBox label="GEN" count={item.bed_av_general} />
-          <StatBox label="O2" count={item.bed_av_oxygen} />
-          <StatBox label="ICU" count={item.bed_av_icu} />
-        </View>
-
-        <View style={styles.cardActions}>
-          <TouchableOpacity
-            style={styles.dirBtn}
-            onPress={() => onDirection(item.lat, item.lng)}
-          >
-            <MaterialCommunityIcons name="directions" size={18} color={Colors.primary} />
-            <Text style={styles.dirBtnText}>Directions</Text>
-          </TouchableOpacity>
-          <View style={styles.flex} />
-          <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.sub} />
-        </View>
-      </Card>
-    </MotiView>
-  );
-});
-
-const StatBox = ({ label, count }) => (
-  <View style={styles.statBox}>
-    <Text style={styles.statLabel}>{label}</Text>
-    <Text style={[styles.statCount, { color: count > 0 ? Colors.good : Colors.text }]}>{count || 0}</Text>
-  </View>
-);
-
-const SearchHeader = ({
-  query, setQuery,
-  showFilters, setShowFilters,
-  radiusKm, setRadiusKm,
-  hType, setHType,
-  showMap, setShowMap
-}) => (
-  <View style={styles.header}>
-    <View style={styles.searchRow}>
-      <View style={styles.searchBox}>
-        <MaterialCommunityIcons name="magnify" size={20} color={Colors.sub} />
-        <TextInput
-          style={styles.input}
-          placeholder="Search hospitals..."
-          placeholderTextColor={Colors.sub + '80'}
-          value={query}
-          onChangeText={setQuery}
-        />
       </View>
-      <TouchableOpacity
-        style={[styles.iconBtn, showFilters && styles.iconBtnActive]}
-        onPress={() => setShowFilters(!showFilters)}
-      >
-        <MaterialCommunityIcons name="tune" size={20} color={showFilters ? '#fff' : Colors.text} />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.iconBtn}
-        onPress={() => setShowMap(!showMap)}
-      >
-        <MaterialCommunityIcons name={showMap ? "format-list-bulleted" : "map-outline"} size={20} color={Colors.text} />
-      </TouchableOpacity>
-    </View>
-
-    <AnimatePresence>
-      {showFilters && (
-        <MotiView
-          from={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 160 }}
-          exit={{ opacity: 0, height: 0 }}
-          style={styles.filterBox}
+      <Text style={hc.addr} numberOfLines={2}>{item.address || 'Address not available'}</Text>
+      <View style={hc.footer}>
+        <TouchableOpacity
+          style={[hc.bedChip, { backgroundColor: bedColor }]}
+          onPress={openHospital}
         >
-          <Text style={styles.filterTitle}>SEARCH RADIUS</Text>
-          <View style={styles.chipRow}>
-            {RADIUS_OPTIONS.map(r => (
-              <TouchableOpacity
-                key={r}
-                style={[styles.chip, radiusKm === r && styles.chipActive]}
-                onPress={() => setRadiusKm(r)}
-              >
-                <Text style={[styles.chipText, radiusKm === r && styles.chipTextActive]}>{r}km</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Text style={styles.filterTitle}>FACILITY TYPE</Text>
-          <View style={styles.chipRow}>
-            {TYPES.map(t => (
-              <TouchableOpacity
-                key={t}
-                style={[styles.chip, hType === t && styles.chipActive]}
-                onPress={() => setHType(t)}
-              >
-                <Text style={[styles.chipText, hType === t && styles.chipTextActive]}>{t}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </MotiView>
-      )}
-    </AnimatePresence>
-  </View>
-);
+          <Text style={hc.bedText}>{totalBeds} Beds</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={hc.callBtn}
+          onPress={() => item.phone && Linking.openURL(`tel:${item.phone}`)}
+        >
+          <MaterialCommunityIcons name="phone-outline" size={16} color="#fff" />
+          <Text style={hc.callText}>Call</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={hc.expandBtn}
+          onPress={openHospital}
+        >
+          <MaterialCommunityIcons name={isOsm ? "open-in-new" : "chevron-down"} size={20} color={Colors.primary} />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function List() {
   const route = useRoute();
   const navigation = useNavigation();
   const [coords, setCoords] = useState(route.params?.coords || null);
-  const [query, setQuery] = useState(route.params?.q || '');
-  const [debouncedQuery, setDebouncedQuery] = useState(query);
-  const [showFilters, setShowFilters] = useState(false);
-  const [radiusKm, setRadiusKm] = useState(10);
-  const [hType, setHType] = useState('All');
+  const [placeLabel, setPlaceLabel] = useState('Searching…');
+  const [subLabel, setSubLabel] = useState('');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [locLoading, setLocLoading] = useState(false);
-  const [showMap, setShowMap] = useState(false);
-  const [favIds, setFavIds] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchText, setSearchText] = useState(route.params?.q || '');
+
+  // Filters
+  const [requirement, setRequirement] = useState('Hospital Bed');
+  const [bedType, setBedType] = useState('All Types');
+  const [specialist, setSpecialist] = useState('All');
+  const [distance, setDistance] = useState('10 km²');
+  const [hospType, setHospType] = useState('All');
+
+  const radiusKm = parseInt(distance);
 
   useEffect(() => {
-    const handler = setTimeout(() => setDebouncedQuery(query), 500);
-    return () => clearTimeout(handler);
-  }, [query]);
+    if (!coords) getLocation();
+    else reverseGeocode(coords);
+  }, []);
 
-  useEffect(() => { (async () => setFavIds(await getFavoriteIds()))(); }, []);
+  const getLocation = async () => {
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      let fs = status;
+      if (fs !== 'granted') {
+        const { status: s } = await Location.requestForegroundPermissionsAsync();
+        fs = s;
+      }
+      if (fs !== 'granted') { setPlaceLabel('Location denied'); return; }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const c = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+      setCoords(c);
+      reverseGeocode(c);
+    } catch { setPlaceLabel('Location unavailable'); }
+  };
 
-  useEffect(() => {
-    if (!coords) {
-      (async () => {
-        setLocLoading(true);
-        try {
-          const { status } = await Location.getForegroundPermissionsAsync();
-          if (status !== 'granted') {
-            const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
-            if (newStatus !== 'granted') {
-              Alert.alert('Permission Denied', 'Please enable location permissions.');
-              setLocLoading(false);
-              return;
-            }
-          }
-          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-          setCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-        } catch (e) {
-          console.error(e);
-        } finally {
-          setLocLoading(false);
-        }
-      })();
-    }
-  }, [coords]);
+  const reverseGeocode = async (c) => {
+    try {
+      const [addr] = await Location.reverseGeocodeAsync({ latitude: c.lat, longitude: c.lng });
+      if (addr) {
+        setPlaceLabel(addr.city || addr.district || addr.region || 'My Location');
+        setSubLabel([addr.street, addr.subregion].filter(Boolean).join(', '));
+      }
+    } catch { }
+  };
 
   const fetchNearby = useCallback(async () => {
+    if (!coords?.lat) { setLoading(false); return; }
     try {
       setLoading(true);
-      if (!coords?.lat || !coords?.lng) {
-        setLoading(false);
-        return;
-      }
-      const osmHospitals = await discoverHospitals(coords.lat, coords.lng, radiusKm);
-      const { data: dbHospitals, error } = await supabase.rpc('nearby_hospitals', {
-        user_lat: coords.lat,
-        user_lng: coords.lng,
-        radius_km: parseFloat(radiusKm)
-      });
 
-      const combined = [...(dbHospitals || [])];
+      // Run OSM and Supabase in PARALLEL instead of sequentially
+      const [osmResult, dbResult] = await Promise.allSettled([
+        discoverHospitals(coords.lat, coords.lng, radiusKm),
+        supabase.rpc('nearby_hospitals', {
+          user_lat: coords.lat,
+          user_lng: coords.lng,
+          radius_km: parseFloat(radiusKm),
+        }),
+      ]);
+
+      const osmHospitals = osmResult.status === 'fulfilled' ? osmResult.value : [];
+      const dbHospitals = dbResult.status === 'fulfilled' ? (dbResult.value?.data || []) : [];
+
+      const combined = [...dbHospitals];
       const dbNames = new Set(combined.map(h => h.name.toLowerCase()));
-
       osmHospitals.forEach(oh => {
         if (!dbNames.has(oh.name.toLowerCase())) {
-          combined.push({
-            ...oh,
-            id: `osm-${oh.lat}-${oh.lng}`,
-            bed_av_icu: 0,
-            bed_av_oxygen: 0,
-            bed_av_general: 0,
-            in_db: false
-          });
+          combined.push({ ...oh, id: `osm-${oh.lat}-${oh.lng}`, bed_av_icu: 0, bed_av_oxygen: 0, bed_av_general: 0 });
         }
       });
 
       let list = combined;
-      const qstr = debouncedQuery.toLowerCase().trim();
 
-      // Filter by Type
-      if (hType !== 'All') {
-        list = list.filter(r => r.type === hType);
+      // Apply type filter
+      if (hospType !== 'All') {
+        const map = { Private: 'Pvt', Government: 'Gov', 'Semi-Govt': 'Sem' };
+        list = list.filter(h => h.type === map[hospType]);
       }
 
-      // Filter by Query
-      if (qstr) {
-        list = list.filter(r =>
-          r.name.toLowerCase().includes(qstr) ||
-          (r.address || '').toLowerCase().includes(qstr)
-        );
-      }
+      // Apply search text
+      const q = searchText.toLowerCase().trim();
+      if (q) list = list.filter(h => h.name.toLowerCase().includes(q) || (h.address || '').toLowerCase().includes(q));
 
       list.sort((a, b) => (a.distance_km || 999) - (b.distance_km || 999));
       setRows(list);
@@ -258,153 +196,170 @@ export default function List() {
       console.error(err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [coords, radiusKm, debouncedQuery]);
+  }, [coords, radiusKm, hospType, searchText]);
 
-  useEffect(() => {
-    fetchNearby();
-    const sub = supabase.channel('hospitals-all').on('postgres_changes', { event: '*', schema: 'public', table: 'hospitals' }, () => fetchNearby()).subscribe();
-    return () => supabase.removeChannel(sub);
-  }, [fetchNearby]);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchNearby();
-    setRefreshing(false);
-  };
-
-  const onDirection = useCallback((lat, lng) => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`), []);
-  const onFavPress = useCallback(async (id) => setFavIds(await toggleFavorite(id)), []);
-
-  const headerElement = (
-    <SearchHeader
-      query={query} setQuery={setQuery}
-      showFilters={showFilters} setShowFilters={setShowFilters}
-      radiusKm={radiusKm} setRadiusKm={setRadiusKm}
-      hType={hType} setHType={setHType}
-      showMap={showMap} setShowMap={setShowMap}
-    />
-  );
-
-  if (locLoading && !coords) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Detecting location...</Text>
-      </View>
-    );
-  }
+  useEffect(() => { if (coords) fetchNearby(); }, [fetchNearby]);
 
   return (
-    <View style={styles.container}>
-      {showMap ? (
-        <View style={{ flex: 1 }}>
-          {headerElement}
-          <MapComponent userLocation={coords} hospitals={rows} />
+    <View style={s.container}>
+      {/* Location Header */}
+      <View style={s.header}>
+        <TouchableOpacity style={s.locRow} onPress={getLocation}>
+          <MaterialCommunityIcons name="map-marker" size={18} color={Colors.primary} />
+          <View style={{ marginLeft: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={s.locTitle}>{placeLabel}</Text>
+              <MaterialCommunityIcons name="chevron-down" size={16} color={Colors.primary} />
+            </View>
+            {!!subLabel && <Text style={s.locSub} numberOfLines={1}>{subLabel}</Text>}
+          </View>
+        </TouchableOpacity>
+
+        {/* Search + filter */}
+        <View style={s.searchRow}>
+          <View style={s.searchBox}>
+            <MaterialCommunityIcons name="magnify" size={20} color={Colors.sub} />
+            <TextInput
+              style={s.searchInput}
+              placeholder="Search Location"
+              placeholderTextColor={Colors.sub}
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+          </View>
+          <TouchableOpacity
+            style={[s.filterBtn, showFilters && s.filterBtnActive]}
+            onPress={() => setShowFilters(!showFilters)}
+          >
+            <MaterialCommunityIcons name="tune-variant" size={20} color="#fff" />
+          </TouchableOpacity>
         </View>
+
+        {/* Filter Dropdowns */}
+        {showFilters && (
+          <View style={s.filterPanel}>
+            <DropdownPicker label="Requirement" value={requirement} options={REQUIREMENTS} onChange={setRequirement} />
+            <DropdownPicker label="Type" value={bedType} options={BED_TYPES} onChange={setBedType} />
+            <DropdownPicker label="Specialist" value={specialist} options={SPECIALISTS} onChange={setSpecialist} />
+            <DropdownPicker label="Distance in km square" value={distance} options={DISTANCES} onChange={setDistance} />
+            <DropdownPicker label="Hospital Type" value={hospType} options={HOSP_TYPES} onChange={setHospType} />
+            <TouchableOpacity style={s.okBtn} onPress={() => { setShowFilters(false); fetchNearby(); }}>
+              <Text style={s.okText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* Hospital list */}
+      {loading ? (
+        <View style={s.center}><ActivityIndicator color={Colors.primary} size="large" /></View>
       ) : (
         <FlatList
-          data={loading ? [1, 2, 3, 4] : rows}
-          keyExtractor={(item, index) => loading ? `skel-${index}` : item.id}
-          renderItem={({ item, index }) => loading ? (
-            <SkeletonCard />
-          ) : (
-            <HospitalCard
-              item={item}
-              favIds={favIds}
-              index={index}
-              navigation={navigation}
-              onFavPress={onFavPress}
-              onDirection={onDirection}
+          data={rows}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => <HospitalCard item={item} navigation={navigation} />}
+          contentContainerStyle={{ padding: Sp.md, paddingBottom: 100 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => { setRefreshing(true); fetchNearby(); }}
+              tintColor={Colors.primary}
             />
-          )}
-          ListHeaderComponent={headerElement}
-          ListEmptyComponent={!loading && <View style={styles.empty}><Text style={styles.emptyText}>No facilities found in this area.</Text></View>}
-          contentContainerStyle={{ padding: Sp.md }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          }
+          ListEmptyComponent={
+            <View style={s.empty}>
+              <MaterialCommunityIcons name="hospital-off" size={56} color={Colors.sub + '60'} />
+              <Text style={s.emptyText}>No hospitals found nearby.</Text>
+            </View>
+          }
         />
       )}
     </View>
   );
 }
 
-function SkeletonCard() {
-  return (
-    <View style={styles.skelCard}>
-      <Skeleton width="60%" height={24} style={{ marginBottom: 8 }} />
-      <Skeleton width="40%" height={14} style={{ marginBottom: 16 }} />
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        <Skeleton width="30%" height={40} />
-        <Skeleton width="30%" height={40} />
-        <Skeleton width="30%" height={40} />
-      </View>
-    </View>
-  );
-}
+// Dropdown styles
+const dp = StyleSheet.create({
+  wrap: { marginBottom: Sp.sm },
+  label: { fontSize: 12, fontWeight: '700', color: Colors.primary, marginBottom: 4, marginLeft: 2 },
+  box: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#fff', borderRadius: Radii.md, height: 48,
+    paddingHorizontal: Sp.md, ...Shadows.sm,
+  },
+  value: { fontSize: 15, color: Colors.text, fontWeight: '600' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: '#fff', borderTopLeftRadius: Radii.xl, borderTopRightRadius: Radii.xl, padding: Sp.lg },
+  sheetTitle: { fontSize: 16, fontWeight: '800', color: Colors.primary, marginBottom: Sp.md },
+  option: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: Colors.line },
+  optionActive: { backgroundColor: Colors.bg, borderRadius: Radii.sm, paddingHorizontal: Sp.sm },
+  optionText: { fontSize: 15, color: Colors.text },
+  optionTextActive: { fontWeight: '800', color: Colors.primary },
+});
 
-const styles = StyleSheet.create({
+// Hospital card styles
+const hc = StyleSheet.create({
+  card: {
+    backgroundColor: '#fff', borderRadius: Radii.md, padding: Sp.md,
+    marginBottom: Sp.sm, borderWidth: 1, borderColor: Colors.line, ...Shadows.sm,
+  },
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  name: { fontSize: 16, fontWeight: '800', color: Colors.text },
+  type: { fontSize: 12, color: Colors.sub, marginTop: 2 },
+  addr: { fontSize: 13, color: Colors.sub, lineHeight: 18, marginBottom: Sp.sm },
+  footer: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  bedChip: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: Radii.pill },
+  bedText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  callBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: Colors.primary, paddingVertical: 6, paddingHorizontal: 16,
+    borderRadius: Radii.pill,
+  },
+  callText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  expandBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    borderWidth: 1.5, borderColor: Colors.line,
+    alignItems: 'center', justifyContent: 'center',
+  },
+});
+
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loadingText: { marginTop: 12, color: Colors.sub, fontWeight: '600' },
-  flex: { flex: 1 },
-  row: { flexDirection: 'row', alignItems: 'center' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
 
-  header: { marginBottom: Sp.md },
-  searchRow: { flexDirection: 'row', gap: 10 },
+  header: { backgroundColor: Colors.bg, paddingHorizontal: Sp.md, paddingTop: 50, paddingBottom: Sp.sm },
+
+  locRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Sp.md },
+  locTitle: { fontSize: 16, fontWeight: '800', color: Colors.primary, marginRight: 2 },
+  locSub: { fontSize: 12, color: Colors.sub, maxWidth: width - 80 },
+
+  searchRow: { flexDirection: 'row', gap: 10, marginBottom: Sp.sm, alignItems: 'center' },
   searchBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: Radii.md,
-    paddingHorizontal: 12,
-    height: 52,
-    ...Shadows.sm
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: Radii.pill, paddingHorizontal: Sp.md, height: 46,
+    ...Shadows.sm,
   },
-  input: { flex: 1, marginLeft: 8, fontSize: 16, color: Colors.text, height: '100%' },
-  iconBtn: {
-    width: 52,
-    height: 52,
-    backgroundColor: '#fff',
-    borderRadius: Radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.sm
+  searchInput: { flex: 1, marginLeft: 8, fontSize: 15, color: Colors.text },
+  filterBtn: {
+    width: 46, height: 46, borderRadius: 12,
+    backgroundColor: Colors.tealBtn, alignItems: 'center', justifyContent: 'center',
   },
-  iconBtnActive: { backgroundColor: Colors.primary },
+  filterBtnActive: { backgroundColor: Colors.primary },
 
-  filterBox: { overflow: 'hidden', paddingHorizontal: 4 },
-  filterTitle: { fontSize: 11, fontWeight: '900', color: Colors.sub, letterSpacing: 1.5, marginTop: 16, marginBottom: 8 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: Radii.pill, backgroundColor: '#fff', ...Shadows.sm },
-  chipActive: { backgroundColor: Colors.primary },
-  chipText: { fontSize: 13, fontWeight: '700', color: Colors.text },
-  chipTextActive: { color: '#fff' },
-
-  card: { marginBottom: Sp.md, padding: Sp.md },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Sp.sm },
-  cardName: { fontSize: Typo.h2, fontWeight: '800', color: Colors.text },
-  cardAddr: { fontSize: 13, color: Colors.sub, marginLeft: 4 },
-
-  statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Sp.md },
-  distText: { fontSize: 12, fontWeight: '700', color: Colors.primary },
-
-  statsGrid: { flexDirection: 'row', gap: 12, marginBottom: Sp.md },
-  statBox: { flex: 1, padding: 12, borderRadius: Radii.md, backgroundColor: Colors.bg, alignItems: 'center' },
-  statLabel: { fontSize: 10, fontWeight: '900', color: Colors.sub, marginBottom: 4 },
-  statCount: { fontSize: 18, fontWeight: '900' },
-
-  cardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: Colors.line,
-    paddingTop: Sp.sm
+  filterPanel: {
+    backgroundColor: Colors.bg, borderRadius: Radii.lg,
+    padding: Sp.md, marginBottom: Sp.sm,
+    borderWidth: 1, borderColor: Colors.line,
   },
-  dirBtn: { flexDirection: 'row', alignItems: 'center' },
-  dirBtnText: { marginLeft: 6, fontSize: 14, fontWeight: '700', color: Colors.primary },
+  okBtn: {
+    alignSelf: 'flex-end', backgroundColor: Colors.primary,
+    paddingVertical: 10, paddingHorizontal: 32,
+    borderRadius: Radii.md, marginTop: Sp.sm,
+  },
+  okText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 
-  skelCard: { backgroundColor: '#fff', borderRadius: Radii.lg, padding: 16, marginBottom: 12, ...Shadows.sm },
-  empty: { padding: 80, alignItems: 'center' },
-  emptyText: { color: Colors.sub, fontSize: 16, textAlign: 'center' }
+  empty: { alignItems: 'center', marginTop: 80, gap: 12 },
+  emptyText: { color: Colors.sub, fontSize: 15, textAlign: 'center' },
 });

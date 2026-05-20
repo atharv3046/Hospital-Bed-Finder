@@ -21,6 +21,10 @@ export default function BookingForm({ route, navigation }) {
     });
 
     const handleSubmit = async () => {
+        if (!hospital) {
+            Alert.alert('Error', 'No hospital selected. Please go back and try again.');
+            return;
+        }
         if (!form.patientName || !form.age || !form.contactPhone) {
             Alert.alert('Missing Fields', 'Please fill in all required fields.');
             return;

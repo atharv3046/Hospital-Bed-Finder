@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
       setProfile(null);
       return;
     }
+
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -22,46 +23,58 @@ export const AuthProvider = ({ children }) => {
 
     if (!error && data) {
       setProfile(data);
+    } else if (!error && !data) {
+      // Profile row doesn't exist yet — auto-create it (handles missing DB trigger)
+      const { data: created, error: createErr } = await supabase
+        .from('profiles')
+        .insert({ id: userId, role: 'user' })
+        .select()
+        .maybeSingle();
+
+      if (!createErr && created) {
+        setProfile(created);
+      } else {
+        // Profile exists but RLS blocked insert (e.g. already there from trigger) — retry read
+        const { data: retry } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+        if (retry) setProfile(retry);
+      }
     }
   };
 
   useEffect(() => {
-    // 1. AppState listener for auto-refresh
+    // 1. Immediately stop loading so the UI renders
+    setLoading(false);
+
     const { AppState } = require('react-native');
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active') {
-        supabase.auth.startAutoRefresh();
-      } else {
-        supabase.auth.stopAutoRefresh();
-      }
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') supabase.auth.startAutoRefresh();
+      else supabase.auth.stopAutoRefresh();
     });
 
-    // 2. Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
-      setLoading(false);
-    });
-
-    // 3. Listen for auth changes
-    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 2. Listen to auth state changes in the background
+    const { data: { subscription: authStateSubscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
       } else {
         setProfile(null);
       }
-      setLoading(false);
     });
 
     return () => {
-      subscription.remove();
-      authSubscription.unsubscribe();
+      appStateSubscription.remove();
+      authStateSubscription.unsubscribe();
     };
   }, []);
 
+  const refreshProfile = () => fetchProfile(user?.id);
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, refreshProfile: () => fetchProfile(user?.id) }}>
+    <AuthContext.Provider value={{ user, profile, loading, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
