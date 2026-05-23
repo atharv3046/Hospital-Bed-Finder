@@ -19,24 +19,67 @@ export async function discoverHospitals(lat, lng, radiusKm = 10) {
 
     try {
         const radiusMeters = radiusKm * 1000;
-        const query = `
-      [out:json][timeout:15];
-      (
-        node["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
-        way["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
-      );
-      out center;
-    `;
-        const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+        const query = `[out:json][timeout:15];
+(
+  node["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
+  way["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
+);
+out center;`;
+        const endpoints = [
+            { url: `https://overpass-api.de/api/interpreter`, method: 'GET' },
+            { url: `https://overpass.private.coffee/api/interpreter`, method: 'GET' },
+            { url: `https://overpass-api.de/api/interpreter`, method: 'POST' },
+            { url: `https://overpass.private.coffee/api/interpreter`, method: 'POST' }
+        ];
 
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        let response = null;
+        let lastError = null;
 
-        const response = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeout);
+        // Attempt each endpoint with proper method and timeout
+        for (const endpoint of endpoints) {
+            try {
+                const url = endpoint.url;
+                const isPost = endpoint.method === 'POST';
+                const controller = new AbortController();
+                // Use longer timeout for private endpoint (30s) else 15s
+                const timeoutMs = endpoint.url.includes('overpass.private.coffee') ? 30000 : 15000;
+                const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-        if (!response.ok) {
-            console.error('OSM API Error:', response.status);
+                const fetchOptions = {
+                    method: isPost ? 'POST' : 'GET',
+                    signal: controller.signal,
+                    headers: {
+                        'User-Agent': 'HospitalBedFinderApp/1.0 (contact@example.com)',
+                        'Accept': 'application/json',
+                        'Accept-Language': 'en',
+                        'Referer': 'https://overpass-api.de/',
+                        ...(isPost && { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' })
+                    },
+                    ...(isPost && { body: `data=${encodeURIComponent(query)}` })
+                };
+
+                let requestUrl = url;
+                if (!isPost) {
+                    // Append query as GET parameter
+                    requestUrl = `${url}?data=${encodeURIComponent(query)}`;
+                }
+                const res = await fetch(requestUrl, fetchOptions);
+                clearTimeout(timeout);
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    console.warn(`OSM Server ${new URL(url).hostname} returned status: ${res.status}`);
+                    lastError = `Status ${res.status}`;
+                }
+            } catch (err) {
+                console.warn(`OSM Server ${new URL(endpoint.url).hostname} failed: ${err.message}`);
+                lastError = err.message;
+            }
+        }
+
+        if (!response) {
+            console.error('All OSM API endpoints failed. Last error:', lastError);
             return _osmCache.key === cacheKey ? _osmCache.data : [];
         }
 
@@ -50,9 +93,16 @@ export async function discoverHospitals(lat, lng, radiusKm = 10) {
 
         const hospitals = (data.elements || []).map(el => {
             const name = el.tags.name || 'Unnamed Hospital';
-            const address = el.tags['addr:street']
-                ? `${el.tags['addr:street']}, ${el.tags['addr:city'] || ''}`
-                : 'Address not available in OSM';
+            const parts = [
+                el.tags['addr:housenumber'],
+                el.tags['addr:street'],
+                el.tags['addr:suburb'] || el.tags['addr:neighbourhood'],
+                el.tags['addr:city'] || el.tags['addr:town'] || el.tags['addr:village'],
+                el.tags['addr:state'],
+            ].filter(Boolean);
+            const address = parts.length > 0
+                ? parts.join(', ')
+                : (el.tags['addr:full'] || null);
 
             const phone = el.tags['contact:phone'] || el.tags.phone || null;
 
@@ -72,7 +122,7 @@ export async function discoverHospitals(lat, lng, radiusKm = 10) {
 
             return {
                 name,
-                address,
+                address: address || null,
                 phone,
                 lat: hLat,
                 lng: hLng,

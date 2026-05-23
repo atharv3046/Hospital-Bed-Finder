@@ -9,6 +9,7 @@ import { Colors, Radii, Sp, Shadows } from './ui/theme';
 import { Badge, BedProgressBar } from './ui/kit';
 import {
   getAvailabilityStatus, STATUS_LABELS, STATUS_TONES, getBedCounts,
+  hasBedData, displayAddress, formatLastUpdated, isPersistentlyFull,
 } from './utils/hospitals';
 
 const BED_TYPES = [
@@ -98,29 +99,33 @@ export default function HospitalDetail({ route, navigation }) {
 
         <View style={s.addrRow}>
           <MaterialCommunityIcons name="map-marker" size={16} color={Colors.sub} />
-          <Text style={s.addr}>{h.address || 'Address unavailable'}</Text>
+          <Text style={s.addr}>{displayAddress(h)}</Text>
         </View>
 
-        {updatedAt && (
+        {formatLastUpdated(h.updated_at) && (
           <View style={s.updatedRow}>
             <MaterialCommunityIcons name="clock-outline" size={14} color={Colors.sub} />
-            <Text style={s.updated}>
-              Updated {updatedAt.toLocaleTimeString()}
-            </Text>
+            <Text style={s.updated}>{formatLastUpdated(h.updated_at)}</Text>
           </View>
+        )}
+        {isPersistentlyFull(h) && (
+          <Text style={s.warn}>This hospital has reported no beds for 2+ hours.</Text>
         )}
 
         <Text style={s.section}>BED AVAILABILITY</Text>
         {BED_TYPES.map(({ key, label }) => {
           const c = counts[key];
+          const registered = hasBedData(h);
           return (
             <View key={key} style={s.bedCard}>
               <Text style={s.bedLabel}>{label}</Text>
               <View style={s.bedCountRow}>
-                <Text style={[s.bedAv, { color: c.av > 0 ? Colors.good : Colors.bad }]}>{c.av}</Text>
-                <Text style={s.bedTotal}> / {c.total || '—'}</Text>
+                <Text style={[s.bedAv, { color: !registered ? Colors.sub : c.av > 0 ? Colors.good : Colors.bad }]}>
+                  {registered ? c.av : '—'}
+                </Text>
+                <Text style={s.bedTotal}> / {registered ? c.total : '—'}</Text>
               </View>
-              <BedProgressBar available={c.av} total={c.total} height={8} style={{ marginTop: Sp.sm }} />
+              <BedProgressBar available={c.av} total={c.total} height={8} style={{ marginTop: Sp.sm }} unknown={!registered || c.total <= 0} />
             </View>
           );
         })}
@@ -162,6 +167,7 @@ const s = StyleSheet.create({
   addr: { flex: 1, fontSize: 14, color: Colors.sub, lineHeight: 20 },
   updatedRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: Sp.sm },
   updated: { fontSize: 13, color: Colors.sub },
+  warn: { fontSize: 13, color: Colors.warn, fontWeight: '700', marginTop: Sp.sm },
   section: { fontSize: 11, fontWeight: '800', color: Colors.sub, letterSpacing: 1, marginTop: Sp.lg, marginBottom: Sp.sm },
   bedCard: {
     backgroundColor: Colors.bg, borderRadius: Radii.lg, padding: Sp.md, marginBottom: Sp.sm,

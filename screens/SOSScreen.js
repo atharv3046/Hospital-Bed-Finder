@@ -1,14 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Linking, ActivityIndicator, Alert,
+  View, Text, StyleSheet, TouchableOpacity, Linking, ActivityIndicator, Alert, Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Radii, Sp, Shadows } from './ui/theme';
 import {
-  useNearbyHospitals, findNearestWithBeds, formatDistance, getBedCounts,
-  fetchNearbyHospitals, requestLocation,
+  useNearbyHospitals, findNearestWithBeds, formatDistance, getBedCounts, hasBedData,
+  fetchNearbyHospitals, requestLocation, displayAddress,
 } from './utils/hospitals';
+
+function PulseButton({ onPress, disabled, searching }) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.06, duration: 700, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    if (!searching && !disabled) loop.start();
+    return () => loop.stop();
+  }, [searching, disabled]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <TouchableOpacity
+        style={s.sosBtn}
+        onPress={onPress}
+        disabled={disabled}
+        activeOpacity={0.9}
+      >
+        {searching ? (
+          <ActivityIndicator color="#fff" size="large" />
+        ) : (
+          <View style={s.sosInner}>
+            <View style={s.iconCircle}>
+              <MaterialCommunityIcons name="alert-octagon" size={40} color={Colors.bad} />
+            </View>
+            <Text style={s.sosLabel}>FIND NEAREST</Text>
+            <Text style={s.sosSub}>Tap for emergency</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
 
 export default function SOSScreen() {
   const navigation = useNavigation();
@@ -24,7 +62,13 @@ export default function SOSScreen() {
       const found = findNearestWithBeds(list, 'all');
       setNearest(found);
       if (!found) {
-        Alert.alert('No beds nearby', 'No hospitals with available beds were found. Try again or call emergency services.');
+        const withData = list.filter(hasBedData);
+        Alert.alert(
+          'No beds nearby',
+          withData.length
+            ? 'All reporting hospitals are full. Try List view or call emergency services (112).'
+            : 'No hospitals have registered bed counts yet. Ask staff to update the dashboard.'
+        );
       }
     } finally {
       setSearching(false);
@@ -59,28 +103,13 @@ export default function SOSScreen() {
 
       {!nearest ? (
         <View style={s.center}>
-          <TouchableOpacity
-            style={s.sosBtn}
-            onPress={findNearest}
-            disabled={searching || loading}
-            activeOpacity={0.9}
-          >
-            {searching || loading ? (
-              <ActivityIndicator color="#fff" size="large" />
-            ) : (
-              <>
-                <MaterialCommunityIcons name="alert-octagon" size={48} color="#fff" />
-                <Text style={s.sosLabel}>FIND NEAREST</Text>
-                <Text style={s.sosSub}>Tap for emergency</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          <PulseButton onPress={findNearest} disabled={loading} searching={searching || loading} />
         </View>
       ) : (
         <View style={s.resultCard}>
           <Text style={s.closestLabel}>CLOSEST AVAILABLE</Text>
           <Text style={s.hospName}>{nearest.name}</Text>
-          <Text style={s.hospAddr}>{nearest.address || 'Address unavailable'}</Text>
+          <Text style={s.hospAddr}>{displayAddress(nearest)}</Text>
           <Text style={s.dist}>{formatDistance(nearest.distance_km).toUpperCase()}</Text>
 
           <View style={s.bedRow}>
@@ -134,12 +163,20 @@ const s = StyleSheet.create({
   sub: { fontSize: 14, color: Colors.sub, marginTop: 8, lineHeight: 20 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   sosBtn: {
-    width: 220, height: 220, borderRadius: 110,
+    width: 240, minHeight: 240, borderRadius: 120,
     backgroundColor: Colors.bad, alignItems: 'center', justifyContent: 'center',
-    ...Shadows.lg,
+    paddingVertical: Sp.lg, ...Shadows.lg,
   },
-  sosLabel: { color: '#fff', fontSize: 22, fontWeight: '900', marginTop: 12, letterSpacing: 1 },
-  sosSub: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 4 },
+  sosInner: { alignItems: 'center', justifyContent: 'center' },
+  iconCircle: {
+    width: 72, height: 72, borderRadius: 36, backgroundColor: '#fff',
+    alignItems: 'center', justifyContent: 'center', marginBottom: Sp.md,
+  },
+  sosLabel: {
+    color: '#fff', fontSize: 20, fontWeight: '900', letterSpacing: 1,
+    textAlign: 'center',
+  },
+  sosSub: { color: 'rgba(255,255,255,0.9)', fontSize: 13, marginTop: 6, textAlign: 'center' },
   resultCard: {
     flex: 1, borderWidth: 2, borderColor: Colors.text, borderRadius: Radii.lg,
     padding: Sp.lg, backgroundColor: '#fff',

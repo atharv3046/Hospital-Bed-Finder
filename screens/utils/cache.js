@@ -1,7 +1,7 @@
 // screens/utils/cache.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const TTL_MS = 1000 * 60 * 10; // 10 minutes
+const TTL_MS = 1000 * 60 * 30; // 30 minutes — offline "last known" fallback
 
 export async function cacheSet(key, value) {
   try {

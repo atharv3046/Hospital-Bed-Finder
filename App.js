@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 
+import Home from './screens/Home';
 import MapScreen from './screens/MapScreen';
 import List from './screens/List';
 import SOSScreen from './screens/SOSScreen';
@@ -27,7 +28,7 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.text,
+        tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.sub,
         tabBarStyle: {
           height: 64,
@@ -41,6 +42,16 @@ function MainTabs() {
         tabBarLabelStyle: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
       }}
     >
+      <Tab.Screen
+        name="Home"
+        component={Home}
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="home-outline" color={color} size={size} />
+          ),
+        }}
+      />
       <Tab.Screen
         name="Map"
         component={MapScreen}

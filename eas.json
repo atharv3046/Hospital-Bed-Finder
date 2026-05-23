@@ -4,7 +4,15 @@
     "preview": {
       "android": { "buildType": "apk" },
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "EX_UPDATES_NATIVE_DEBUG": "1"
+      }
+    },
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": { "buildType": "apk" }
     },
     "production": {
       "android": { "buildType": "app-bundle" },

@@ -69,9 +69,10 @@ export function Badge({ tone = 'neutral', children, style }) {
   const isGood = tone === 'good';
   const isWarn = tone === 'warn';
   const isBad = tone === 'bad';
+  const isNeutral = tone === 'neutral';
 
-  const bg = isGood ? Colors.good + '15' : isWarn ? Colors.warn + '15' : isBad ? Colors.bad + '15' : Colors.accent;
-  const dotColor = isGood ? Colors.good : isWarn ? Colors.warn : isBad ? Colors.bad : Colors.primary;
+  const bg = isGood ? Colors.good + '15' : isWarn ? Colors.warn + '15' : isBad ? Colors.bad + '15' : isNeutral ? '#94A3B820' : Colors.accent;
+  const dotColor = isGood ? Colors.good : isWarn ? Colors.warn : isBad ? Colors.bad : isNeutral ? '#64748B' : Colors.primary;
 
   return (
     <View style={[styles.badge, { backgroundColor: bg }, style]}>
@@ -92,8 +93,15 @@ export function Skeleton({ width: w = '100%', height: h = 20, style }) {
   );
 }
 
-export function BedProgressBar({ available = 0, total = 0, height = 6, style }) {
-  const pct = total > 0 ? Math.min(100, (available / total) * 100) : 0;
+export function BedProgressBar({ available = 0, total = 0, height = 6, style, unknown = false }) {
+  if (unknown || total <= 0) {
+    return (
+      <View style={[styles.progressTrack, { height }, style]}>
+        <View style={[styles.progressFill, { width: '100%', backgroundColor: '#CBD5E1', height }]} />
+      </View>
+    );
+  }
+  const pct = Math.min(100, (available / total) * 100);
   const color = available <= 0 ? Colors.bad : pct <= 25 ? Colors.warn : Colors.good;
   return (
     <View style={[styles.progressTrack, { height }, style]}>
@@ -121,12 +129,30 @@ export function FilterChips({ options, value, onChange }) {
   );
 }
 
-export function StatusLegend() {
+export function StatusLegend({ compact }) {
   return (
     <View style={styles.legend}>
       <LegendItem color={Colors.good} label="OPEN" />
       <LegendItem color={Colors.warn} label="LIMITED" />
       <LegendItem color={Colors.bad} label="FULL" />
+      {!compact && <LegendItem color="#94A3B8" label="NO DATA" />}
+    </View>
+  );
+}
+
+export function NumberStepper({ value, onChange, min = 0, max = 999 }) {
+  const n = parseInt(value, 10) || 0;
+  const dec = () => onChange(String(Math.max(min, n - 1)));
+  const inc = () => onChange(String(Math.min(max, n + 1)));
+  return (
+    <View style={styles.stepper}>
+      <TouchableOpacity style={styles.stepBtn} onPress={dec}>
+        <Text style={styles.stepBtnText}>−</Text>
+      </TouchableOpacity>
+      <Text style={styles.stepVal}>{n}</Text>
+      <TouchableOpacity style={styles.stepBtn} onPress={inc}>
+        <Text style={styles.stepBtnText}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -183,4 +209,11 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendLabel: { fontSize: 9, fontWeight: '700', color: Colors.sub },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  stepBtn: {
+    width: 40, height: 40, borderRadius: Radii.sm, backgroundColor: Colors.bg,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.line,
+  },
+  stepBtnText: { fontSize: 22, fontWeight: '700', color: Colors.primary },
+  stepVal: { fontSize: 22, fontWeight: '900', color: Colors.text, minWidth: 36, textAlign: 'center' },
 });
