@@ -1,52 +1,53 @@
-// App.js
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 
-import Home from './screens/Home';
+import MapScreen from './screens/MapScreen';
 import List from './screens/List';
-import FutureAvailability from './screens/FutureAvailability';
-import EmergencyRequest from './screens/EmergencyRequest';
+import SOSScreen from './screens/SOSScreen';
+import Profile from './screens/Profile';
 import HospitalDetail from './screens/HospitalDetail';
+import StaffDashboard from './screens/StaffDashboard';
 
 import { AuthProvider, useAuth } from './screens/auth/AuthProvider';
 import SignIn from './screens/auth/SignIn';
 import SignUp from './screens/auth/SignUp';
 
-import { Colors, Radii, Shadows } from './screens/ui/theme';
+import { Colors, Shadows } from './screens/ui/theme';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 const AuthStack = createNativeStackNavigator();
 
-function Tabs({ navigation: tabsNav }) {
+function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: true,
-        tabBarActiveTintColor: Colors.primary,
+        tabBarActiveTintColor: Colors.text,
         tabBarInactiveTintColor: Colors.sub,
         tabBarStyle: {
           height: 64,
           paddingBottom: 8,
           paddingTop: 6,
           backgroundColor: '#fff',
-          borderTopWidth: 0,
+          borderTopWidth: 1,
+          borderTopColor: '#E8EEF2',
           ...Shadows.md,
         },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
       }}
     >
       <Tab.Screen
-        name="Home"
-        component={Home}
+        name="Map"
+        component={MapScreen}
         options={{
-          title: 'Home',
+          title: 'MAP',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="home-outline" color={color} size={size} />
+            <MaterialCommunityIcons name="map-outline" color={color} size={size} />
           ),
         }}
       />
@@ -54,36 +55,30 @@ function Tabs({ navigation: tabsNav }) {
         name="List"
         component={List}
         options={{
-          title: 'Search',
+          title: 'LIST',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="magnify" color={color} size={size} />
+            <MaterialCommunityIcons name="format-list-bulleted" color={color} size={size} />
           ),
         }}
       />
       <Tab.Screen
-        name="FutureAvailability"
-        component={FutureAvailability}
+        name="SOS"
+        component={SOSScreen}
         options={{
-          title: 'Request',
+          title: 'SOS',
+          tabBarActiveTintColor: Colors.bad,
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="robot-outline" color={color} size={size} />
+            <MaterialCommunityIcons name="alert-octagon-outline" color={color} size={size} />
           ),
         }}
       />
       <Tab.Screen
-        name="MakeRequest"
-        component={EmergencyRequest}
+        name="Profile"
+        component={Profile}
         options={{
-          title: '',
-          tabBarIcon: () => null,
-          tabBarButton: (props) => (
-            <TouchableOpacity
-              {...props}
-              style={styles.makeRequestBtn}
-            >
-              <MaterialCommunityIcons name="message-text-outline" size={18} color="#fff" />
-              <Text style={styles.makeRequestText}>Make{'\n'}Request</Text>
-            </TouchableOpacity>
+          title: 'PROFILE',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="account-outline" color={color} size={size} />
           ),
         }}
       />
@@ -100,12 +95,33 @@ function AuthStackScreens() {
   );
 }
 
+class ErrorBoundary extends React.Component {
+  state = { hasError: false, error: null };
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('ErrorBoundary', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={eb.wrap}>
+          <Text style={eb.title}>Something went wrong</Text>
+          <Text style={eb.msg}>{this.state.error?.toString()}</Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function RootNavigator() {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg }}>
+      <View style={eb.wrap}>
         <ActivityIndicator color={Colors.primary} />
         <Text style={{ marginTop: 8, color: Colors.sub }}>Loading…</Text>
       </View>
@@ -116,18 +132,9 @@ function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
         <>
-          <Stack.Screen name="MainTabs" component={Tabs} />
-          <Stack.Screen
-            name="HospitalDetail"
-            component={HospitalDetail}
-            options={{
-              headerShown: true,
-              title: 'Hospital Details',
-              headerStyle: { backgroundColor: Colors.bg },
-              headerTintColor: Colors.primary,
-              headerTitleStyle: { fontWeight: '800' },
-            }}
-          />
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <Stack.Screen name="HospitalDetail" component={HospitalDetail} />
+          <Stack.Screen name="StaffDashboard" component={StaffDashboard} />
         </>
       ) : (
         <Stack.Screen name="Auth" component={AuthStackScreens} />
@@ -138,32 +145,18 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
-const styles = StyleSheet.create({
-  makeRequestBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    marginVertical: 8,
-    marginRight: 10,
-    borderRadius: Radii.md,
-    paddingHorizontal: 10,
-    gap: 6,
-    ...Shadows.sm,
-  },
-  makeRequestText: {
-    color: '#fff',
-    fontWeight: '800',
-    fontSize: 12,
-    lineHeight: 15,
-  },
+const eb = StyleSheet.create({
+  wrap: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg },
+  title: { fontSize: 18, fontWeight: '800', color: Colors.bad },
+  msg: { color: Colors.sub, marginTop: 8, paddingHorizontal: 24, textAlign: 'center' },
 });

@@ -1,47 +1,37 @@
-// screens/HospitalDetail.js
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Linking,
-  ActivityIndicator, Alert, ScrollView, Dimensions
+  ActivityIndicator, Alert, ScrollView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { supabase } from '../supabase.js';
-import { toggleFavorite, getFavoriteIds } from './utils/favorites.js';
-import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
-import { Card, Badge, PrimaryButton } from './ui/kit';
+import { Colors, Radii, Sp, Shadows } from './ui/theme';
+import { Badge, BedProgressBar } from './ui/kit';
+import {
+  getAvailabilityStatus, STATUS_LABELS, STATUS_TONES, getBedCounts,
+} from './utils/hospitals';
 
-const { width } = Dimensions.get('window');
+const BED_TYPES = [
+  { key: 'general', label: 'GENERAL BEDS', av: 'bed_av_general', total: 'bed_total_general' },
+  { key: 'icu', label: 'ICU BEDS', av: 'bed_av_icu', total: 'bed_total_icu' },
+  { key: 'oxygen', label: 'OXYGEN BEDS', av: 'bed_av_oxygen', total: 'bed_total_oxygen' },
+];
 
 export default function HospitalDetail({ route, navigation }) {
   const { hospitalId, hospitalData } = route.params;
   const [h, setH] = useState(hospitalData || null);
-  const [favIds, setFavIds] = useState([]);
+  const [updatedAt, setUpdatedAt] = useState(null);
 
   const isOsm = typeof hospitalId === 'string' && hospitalId.startsWith('osm-');
-
-  // Check if it looks like a valid UUID (basic format check)
   const isValidUUID = !isOsm && /^[0-9a-f-]{36}$/i.test(hospitalId);
 
   useEffect(() => {
     if (isOsm) {
-      const name = hospitalData?.name || 'hospital';
-      const addr = hospitalData?.address || '';
-      const query = encodeURIComponent(`${name} hospital ${addr}`);
-      Linking.openURL(`https://www.google.com/search?q=${query}`);
       navigation.goBack();
     }
-  }, []);
-
-  useEffect(() => {
-    if (!isOsm) {
-      (async () => { setFavIds(await getFavoriteIds()); })();
-    }
-  }, []);
-  const isFav = favIds.includes(hospitalId);
+  }, [isOsm]);
 
   const load = async () => {
-    // Never query Supabase if this isn't a valid UUID
     if (!isValidUUID) return;
     const { data, error } = await supabase
       .from('hospitals')
@@ -49,7 +39,10 @@ export default function HospitalDetail({ route, navigation }) {
       .eq('id', hospitalId)
       .maybeSingle();
     if (error) Alert.alert('Error', error.message);
-    setH(data);
+    if (data) {
+      setH(data);
+      setUpdatedAt(data.updated_at ? new Date(data.updated_at) : new Date());
+    }
   };
 
   useEffect(() => {
@@ -58,196 +51,138 @@ export default function HospitalDetail({ route, navigation }) {
     const channel = supabase
       .channel(`hospital-detail-${hospitalId}`)
       .on('postgres_changes', {
-        event: 'UPDATE', schema: 'public', table: 'hospitals', filter: `id=eq.${hospitalId}`
+        event: 'UPDATE', schema: 'public', table: 'hospitals', filter: `id=eq.${hospitalId}`,
       }, () => load())
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [hospitalId]);
 
-  const onToggleFav = async () => setFavIds(await toggleFavorite(hospitalId));
-  const bookBed = (type) => navigation.navigate('BookingForm', { hospital: h, bedType: type });
-
   if (!h) {
     return (
       <View style={s.center}>
         <ActivityIndicator color={Colors.primary} />
-        <Skeleton width="80%" height={200} style={{ marginTop: 20 }} />
       </View>
     );
   }
 
+  const status = getAvailabilityStatus(h);
+  const counts = getBedCounts(h);
+
+  const callNow = () => {
+    if (h.phone) Linking.openURL(`tel:${h.phone}`);
+    else Alert.alert('No phone', 'Phone number not listed for this hospital.');
+  };
+
+  const directions = () => {
+    if (h.lat && h.lng) {
+      Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}`);
+    } else {
+      Alert.alert('No location', 'GPS coordinates not available.');
+    }
+  };
+
   return (
-    <ScrollView style={s.wrap} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-      {/* Hero Header */}
-      <MotiView from={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={s.hero}>
-        <View style={s.heroOverlay}>
-          <View style={s.heroHeader}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-              <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={onToggleFav} style={s.favBtn}>
-              <MaterialCommunityIcons
-                name={isFav ? "heart" : "heart-outline"}
-                size={26} color={isFav ? "#EF4444" : "#fff"}
-              />
-            </TouchableOpacity>
+    <View style={s.wrap}>
+      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+        <View style={s.hero}>
+          <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
+            <MaterialCommunityIcons name="arrow-left" size={22} color={Colors.text} />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={s.kicker}>HOSPITAL</Text>
+        <View style={s.titleRow}>
+          <Text style={s.name}>{h.name}</Text>
+          <Badge tone={STATUS_TONES[status]}>{STATUS_LABELS[status]}</Badge>
+        </View>
+
+        <View style={s.addrRow}>
+          <MaterialCommunityIcons name="map-marker" size={16} color={Colors.sub} />
+          <Text style={s.addr}>{h.address || 'Address unavailable'}</Text>
+        </View>
+
+        {updatedAt && (
+          <View style={s.updatedRow}>
+            <MaterialCommunityIcons name="clock-outline" size={14} color={Colors.sub} />
+            <Text style={s.updated}>
+              Updated {updatedAt.toLocaleTimeString()}
+            </Text>
           </View>
-          <View style={s.heroTitleBox}>
-            <Text style={s.heroName}>{h.name}</Text>
-            <View style={s.locRow}>
-              <MaterialCommunityIcons name="map-marker" size={16} color={Colors.accent} />
-              <Text style={s.heroAddr}>{h.address || 'Location information unavailable'}</Text>
+        )}
+
+        <Text style={s.section}>BED AVAILABILITY</Text>
+        {BED_TYPES.map(({ key, label }) => {
+          const c = counts[key];
+          return (
+            <View key={key} style={s.bedCard}>
+              <Text style={s.bedLabel}>{label}</Text>
+              <View style={s.bedCountRow}>
+                <Text style={[s.bedAv, { color: c.av > 0 ? Colors.good : Colors.bad }]}>{c.av}</Text>
+                <Text style={s.bedTotal}> / {c.total || '—'}</Text>
+              </View>
+              <BedProgressBar available={c.av} total={c.total} height={8} style={{ marginTop: Sp.sm }} />
             </View>
-          </View>
-        </View>
-      </MotiView>
+          );
+        })}
 
-      <MotiView from={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 200 }}>
-        {/* Trust Indicators */}
-        <View style={s.trustRow}>
-          {h.verified && (
-            <View style={s.trustBadge}>
-              <MaterialCommunityIcons name="check-decagram" size={16} color={Colors.good} />
-              <Text style={s.trustText}>Verified</Text>
-            </View>
-          )}
-          <View style={s.trustBadge}>
-            <MaterialCommunityIcons name="ambulance" size={16} color={Colors.primary} />
-            <Text style={s.trustText}>{h.response_time_avg || '15'} min Response</Text>
-          </View>
-        </View>
+        <View style={{ height: 100 }} />
+      </ScrollView>
 
-        {/* Info Card */}
-        <Card style={s.infoCard}>
-          <Text style={s.sectionHeader}>About Facility</Text>
-          <Text style={s.aboutText}>
-            {h.about || `A premium healthcare facility specializing in emergency care and residential medical services. Equipped with state-of-the-art life support systems.`}
-          </Text>
-          <View style={s.divider} />
-          <InfoRow icon="phone" label="Emergency Contact" value={h.phone || 'Registry listing restricted'} />
-          <InfoRow
-            icon="hospital-building"
-            label="Facility Type"
-            value={h.type === 'Pvt' ? 'Private' : h.type === 'Gov' ? 'Government' : 'Semi-Government'}
-          />
-
-          <PrimaryButton
-            title="GET DIRECTIONS"
-            onPress={() => {
-              if (h.lat && h.lng) {
-                Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}`);
-              } else {
-                Alert.alert('No Location', 'GPS coordinates not available for this hospital.');
-              }
-            }}
-            style={{ marginTop: Sp.md, backgroundColor: Colors.primary + '15' }}
-            icon={<MaterialCommunityIcons name="google-maps" size={20} color={Colors.primary} />}
-          />
-        </Card>
-
-        {/* Bed Status */}
-        <Text style={s.sectionHeader}>Live Bed Availability</Text>
-        <View style={s.bedGrid}>
-          <BedTile label="ICU" av={h.bed_av_icu} total={h.bed_total_icu} onBook={() => bookBed('ICU')} />
-          <BedTile label="O2" av={h.bed_av_oxygen} total={h.bed_total_oxygen} onBook={() => bookBed('OXYGEN')} />
-          <BedTile label="GEN" av={h.bed_av_general} total={h.bed_total_general} onBook={() => bookBed('GENERAL')} />
-        </View>
-
-        {/* Services */}
-        <Text style={s.sectionHeader}>Services & Specialties</Text>
-        <View style={s.tagRow}>
-          {(h.specialties || 'Emergency, Surgery, Pediatrics, Diagnostics').split(',').map((tag, i) => (
-            <View key={i} style={s.tag}>
-              <Text style={s.tagText}>{tag.trim()}</Text>
-            </View>
-          ))}
-        </View>
-
-        <TouchableOpacity style={s.futureBtn} onPress={() => navigation.navigate('FutureAvailability')}>
-          <MaterialCommunityIcons name="calendar-clock" size={20} color="#fff" />
-          <Text style={s.futureBtnText}>Check Historical Trends</Text>
+      <View style={s.footer}>
+        <TouchableOpacity style={s.dirBtn} onPress={directions}>
+          <MaterialCommunityIcons name="navigation" size={20} color={Colors.text} />
+          <Text style={s.dirText}>DIRECTIONS</Text>
         </TouchableOpacity>
-      </MotiView>
-
-      <View style={{ height: 40 }} />
-    </ScrollView>
-  );
-}
-
-function InfoRow({ icon, label, value }) {
-  return (
-    <View style={s.infoRow}>
-      <MaterialCommunityIcons name={icon} size={20} color={Colors.primary} />
-      <View style={{ marginLeft: 12 }}>
-        <Text style={s.infoLabel}>{label}</Text>
-        <Text style={s.infoValue}>{value}</Text>
+        <TouchableOpacity style={s.callBtn} onPress={callNow}>
+          <MaterialCommunityIcons name="phone" size={20} color="#fff" />
+          <Text style={s.callText}>CALL NOW</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-function BedTile({ label, av = 0, total = 0, onBook }) {
-  return (
-    <Card style={s.bedTile}>
-      <Text style={s.bedLabel}>{label}</Text>
-      <Text style={[s.bedCount, { color: av > 0 ? Colors.good : Colors.bad }]}>{av}</Text>
-      <Text style={s.bedTotal}>out of {total}</Text>
-      {av > 0 ? (
-        <TouchableOpacity style={s.miniBookBtn} onPress={onBook}>
-          <Text style={s.miniBookText}>BOOK</Text>
-        </TouchableOpacity>
-      ) : (
-        <View style={s.fullBadge}><Text style={s.fullText}>FULL</Text></View>
-      )}
-    </Card>
-  );
-}
-
 const s = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: Colors.bg },
+  wrap: { flex: 1, backgroundColor: '#fff' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  content: { padding: Sp.md },
-
-  hero: { height: 240, borderRadius: Radii.xl, backgroundColor: Colors.primary, overflow: 'hidden', ...Shadows.lg },
-  heroOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', padding: 20, justifyContent: 'space-between' },
-  heroHeader: { flexDirection: 'row', justifyContent: 'space-between' },
-  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
-  favBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
-  heroTitleBox: { marginBottom: 10 },
-  heroName: { fontSize: 28, fontWeight: '900', color: '#fff', letterSpacing: -0.5 },
-  locRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  heroAddr: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginLeft: 4, fontWeight: '600' },
-
-  trustRow: { flexDirection: 'row', gap: 12, marginTop: Sp.md, marginBottom: Sp.md },
-  trustBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingVertical: 8, paddingHorizontal: 12, borderRadius: Radii.pill, ...Shadows.sm },
-  trustText: { marginLeft: 6, fontSize: 12, fontWeight: '700', color: Colors.text },
-
-  sectionHeader: { fontSize: 18, fontWeight: '800', color: Colors.text, marginTop: Sp.md, marginBottom: Sp.sm },
-  infoCard: { padding: Sp.lg },
-  aboutText: { fontSize: 15, color: Colors.sub, lineHeight: 22 },
-  divider: { height: 1, backgroundColor: Colors.line, marginVertical: Sp.md },
-  infoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  infoLabel: { fontSize: 11, fontWeight: '900', color: Colors.sub, textTransform: 'uppercase' },
-  infoValue: { fontSize: 15, fontWeight: '700', color: Colors.text },
-
-  bedGrid: { flexDirection: 'row', gap: 12 },
-  bedTile: { flex: 1, alignItems: 'center', padding: 12 },
-  bedLabel: { fontSize: 12, fontWeight: '900', color: Colors.sub },
-  bedCount: { fontSize: 28, fontWeight: '900', marginVertical: 2 },
-  bedTotal: { fontSize: 10, color: Colors.sub, marginBottom: 12 },
-  miniBookBtn: { backgroundColor: Colors.primary, paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radii.sm },
-  miniBookText: { color: '#fff', fontSize: 10, fontWeight: '900' },
-  fullBadge: { backgroundColor: Colors.bg, paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radii.sm },
-  fullText: { color: Colors.sub, fontSize: 10, fontWeight: '900' },
-
-  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tag: { backgroundColor: '#fff', paddingVertical: 8, paddingHorizontal: 16, borderRadius: Radii.pill, ...Shadows.sm },
-  tagText: { color: Colors.text, fontSize: 12, fontWeight: '700' },
-
-  futureBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: Colors.accent, marginTop: Sp.lg, height: 56,
-    borderRadius: Radii.md, ...Shadows.md
+  content: { paddingHorizontal: Sp.md, paddingBottom: Sp.xl },
+  hero: {
+    height: 180, marginHorizontal: -Sp.md, marginBottom: Sp.md,
+    backgroundColor: Colors.bg,
+    justifyContent: 'flex-start', padding: Sp.md,
   },
-  futureBtnText: { marginLeft: 10, color: '#fff', fontSize: 15, fontWeight: '800' }
+  backBtn: {
+    width: 40, height: 40, borderRadius: 8, backgroundColor: '#fff',
+    alignItems: 'center', justifyContent: 'center', ...Shadows.sm,
+  },
+  kicker: { fontSize: 11, fontWeight: '800', color: Colors.sub, letterSpacing: 1 },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginTop: 4 },
+  name: { fontSize: 26, fontWeight: '900', color: Colors.text, flex: 1 },
+  addrRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: Sp.sm },
+  addr: { flex: 1, fontSize: 14, color: Colors.sub, lineHeight: 20 },
+  updatedRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: Sp.sm },
+  updated: { fontSize: 13, color: Colors.sub },
+  section: { fontSize: 11, fontWeight: '800', color: Colors.sub, letterSpacing: 1, marginTop: Sp.lg, marginBottom: Sp.sm },
+  bedCard: {
+    backgroundColor: Colors.bg, borderRadius: Radii.lg, padding: Sp.md, marginBottom: Sp.sm,
+  },
+  bedLabel: { fontSize: 11, fontWeight: '800', color: Colors.sub },
+  bedCountRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 4 },
+  bedAv: { fontSize: 36, fontWeight: '900' },
+  bedTotal: { fontSize: 18, color: Colors.sub, fontWeight: '600' },
+  footer: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    flexDirection: 'row', gap: 10, padding: Sp.md, paddingBottom: 28,
+    backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: Colors.line,
+  },
+  dirBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    height: 52, borderRadius: Radii.md, borderWidth: 2, borderColor: Colors.text,
+  },
+  dirText: { fontWeight: '800', color: Colors.text },
+  callBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    height: 52, borderRadius: Radii.md, backgroundColor: Colors.bad,
+  },
+  callText: { color: '#fff', fontWeight: '800' },
 });

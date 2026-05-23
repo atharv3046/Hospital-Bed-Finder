@@ -92,6 +92,54 @@ export function Skeleton({ width: w = '100%', height: h = 20, style }) {
   );
 }
 
+export function BedProgressBar({ available = 0, total = 0, height = 6, style }) {
+  const pct = total > 0 ? Math.min(100, (available / total) * 100) : 0;
+  const color = available <= 0 ? Colors.bad : pct <= 25 ? Colors.warn : Colors.good;
+  return (
+    <View style={[styles.progressTrack, { height }, style]}>
+      <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: color, height }]} />
+    </View>
+  );
+}
+
+export function FilterChips({ options, value, onChange }) {
+  return (
+    <View style={styles.chipRow}>
+      {options.map(opt => {
+        const active = value === opt.key;
+        return (
+          <TouchableOpacity
+            key={opt.key}
+            style={[styles.chip, active && styles.chipActive]}
+            onPress={() => onChange(opt.key)}
+          >
+            <Text style={[styles.chipText, active && styles.chipTextActive]}>{opt.label}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
+export function StatusLegend() {
+  return (
+    <View style={styles.legend}>
+      <LegendItem color={Colors.good} label="OPEN" />
+      <LegendItem color={Colors.warn} label="LIMITED" />
+      <LegendItem color={Colors.bad} label="FULL" />
+    </View>
+  );
+}
+
+function LegendItem({ color, label }) {
+  return (
+    <View style={styles.legendItem}>
+      <View style={[styles.legendDot, { backgroundColor: color }]} />
+      <Text style={styles.legendLabel}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.card,
@@ -121,4 +169,18 @@ const styles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
   badgeText: { fontWeight: '700', fontSize: Typo.small, textTransform: 'uppercase' },
   skeleton: { backgroundColor: '#E2E8F0', borderRadius: Radii.sm },
+  progressTrack: { backgroundColor: '#E2E8F0', borderRadius: Radii.pill, overflow: 'hidden', width: '100%' },
+  progressFill: { borderRadius: Radii.pill },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: Sp.sm },
+  chip: {
+    paddingVertical: 8, paddingHorizontal: 16, borderRadius: Radii.pill,
+    backgroundColor: '#E8EEF2',
+  },
+  chipActive: { backgroundColor: Colors.text },
+  chipText: { fontSize: 12, fontWeight: '800', color: Colors.sub },
+  chipTextActive: { color: '#fff' },
+  legend: { alignItems: 'flex-end', gap: 4 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
+  legendLabel: { fontSize: 9, fontWeight: '700', color: Colors.sub },
 });
