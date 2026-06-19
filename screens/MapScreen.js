@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal,
   ScrollView, ActivityIndicator, Platform, TextInput,
@@ -8,28 +8,47 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MapComponent from './MapComponent';
 import { Colors, Radii, Sp, Shadows } from './ui/theme';
 import { Badge, FilterChips, StatusLegend } from './ui/kit';
+import { useHospitals } from './HospitalContext';
 import {
-  useNearbyHospitals, getAvailabilityStatus, STATUS_LABELS, STATUS_TONES,
+  getAvailabilityStatus, STATUS_LABELS, STATUS_TONES,
   getBedCounts, BED_FILTERS, filterByBedType, displayAddress, isOsmId, hasBedData,
 } from './utils/hospitals';
 
+// Debounce hook — no external deps
+function useDebounce(value, delay = 300) {
+  const [debounced, setDebounced] = useState(value);
+  const timer = useRef(null);
+  const set = useCallback((v) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setDebounced(v), delay);
+  }, [delay]);
+  return [debounced, set];
+}
+
 export default function MapScreen() {
   const navigation = useNavigation();
-  const { coords, hospitals, loading, fromCache } = useNearbyHospitals(null, 25);
+  // ✅ Data is preloaded — no API call, instant render
+  const { coords, hospitals, loading, fromCache } = useHospitals();
   const [selected, setSelected] = useState(null);
   const [bedFilter, setBedFilter] = useState('all');
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useDebounce('', 300);
+
+  const handleSearch = useCallback((text) => {
+    setSearchInput(text);
+    setDebouncedSearch(text);
+  }, [setDebouncedSearch]);
 
   const filtered = useMemo(() => {
     let list = filterByBedType(hospitals, bedFilter);
-    const q = search.trim().toLowerCase();
+    const q = debouncedSearch.trim().toLowerCase();
     if (q) {
       list = list.filter(h =>
-        h.name.toLowerCase().includes(q) || displayAddress(h).toLowerCase().includes(q)
+        (h.name || '').toLowerCase().includes(q) || displayAddress(h).toLowerCase().includes(q)
       );
     }
     return list;
-  }, [hospitals, bedFilter, search]);
+  }, [hospitals, bedFilter, debouncedSearch]);
 
   const openDetail = (h) => {
     if (isOsmId(h.id)) {
@@ -55,9 +74,14 @@ export default function MapScreen() {
             style={s.searchInput}
             placeholder="Search on map…"
             placeholderTextColor={Colors.sub}
-            value={search}
-            onChangeText={setSearch}
+            value={searchInput}
+            onChangeText={handleSearch}
           />
+          {!!searchInput && (
+            <TouchableOpacity onPress={() => handleSearch('')}>
+              <MaterialCommunityIcons name="close-circle" size={18} color={Colors.sub} />
+            </TouchableOpacity>
+          )}
         </View>
         <FilterChips options={BED_FILTERS} value={bedFilter} onChange={setBedFilter} />
         <View style={s.legendRow}>

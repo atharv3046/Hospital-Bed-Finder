@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, FlatList, Dimensions, ActivityIndicator,
@@ -6,7 +6,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { Colors, Radii, Sp, Shadows, Typo } from './ui/theme';
-import { useNearbyHospitals, getAreaStats } from './utils/hospitals';
+import { useHospitals } from './HospitalContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 32;
@@ -37,9 +37,9 @@ export default function Home({ navigation }) {
   const [subLabel, setSubLabel] = useState('');
   const [slideIndex, setSlideIndex] = useState(0);
   const flatRef = useRef(null);
-  const { hospitals, loading, fromCache } = useNearbyHospitals(null, 25);
+  // ✅ areaStats is precomputed in context — zero recalculation on render
+  const { hospitals, loading, fromCache, areaStats: stats } = useHospitals();
 
-  const stats = useMemo(() => getAreaStats(hospitals), [hospitals]);
 
   useEffect(() => {
     detectLocation();

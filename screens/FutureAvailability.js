@@ -50,14 +50,29 @@ export default function FutureAvailability() {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const isValidDate = (str) => {
+    if (!str) return true; // date is optional
+    // Accepts DD/MM/YYYY or DD-MM-YYYY
+    const match = str.trim().match(/^(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})$/);
+    if (!match) return false;
+    const [, d, m, y] = match.map(Number);
+    if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+    const parsed = new Date(y, m - 1, d);
+    return parsed.getFullYear() === y && parsed.getMonth() === m - 1 && parsed.getDate() === d;
+  };
+
   const submit = async () => {
+    if (!user) { Alert.alert('Login Required', 'Please log in before making a request.'); return; }
     if (!location.trim()) { Alert.alert('Missing', 'Please enter a location.'); return; }
+    if (date.trim() && !isValidDate(date.trim())) {
+      Alert.alert('Invalid Date', 'Please enter a valid date in DD/MM/YYYY format.'); return;
+    }
     if (!agreed) { Alert.alert('Terms', 'Please agree to the terms and conditions.'); return; }
 
     setLoading(true);
     try {
       const { error } = await supabase.from('future_availability_requests').insert({
-        user_id: user?.id,
+        user_id: user.id,
         requirement,
         location_text: location.trim(),
         provider_name: providerName.trim() || null,

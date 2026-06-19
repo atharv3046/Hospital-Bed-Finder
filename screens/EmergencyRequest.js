@@ -50,13 +50,14 @@ export default function EmergencyRequest() {
     const [loading, setLoading] = useState(false);
 
     const submit = async () => {
+        if (!user) { Alert.alert('Login Required', 'Please log in before making a request.'); return; }
         if (!location.trim()) { Alert.alert('Missing', 'Please enter a location.'); return; }
         if (!agreed) { Alert.alert('Terms', 'Please agree to the terms and conditions.'); return; }
 
         setLoading(true);
         try {
             const { error } = await supabase.from('emergency_requests').insert({
-                user_id: user?.id,
+                user_id: user.id,
                 nature_of_emergency: requirement,
                 location_text: location.trim(),
                 patient_name: name.trim() || null,

@@ -1,8 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert } from 'react-native';
 import * as Location from 'expo-location';
 import { supabase } from '../../supabase.js';
 import { discoverHospitals } from './osm.js';
-import { cacheGet, cacheSet } from './cache.js';
+import {
+  cacheGet, cacheSet,
+  hospitalListKey, nearestHospitalKey,
+  USER_LOCATION_KEY,
+  TTL_HOSPITALS, TTL_NEAREST, TTL_LOCATION,
+} from './cache.js';
 
 export const BED_FILTERS = [
   { key: 'all', label: 'ALL' },
@@ -162,15 +168,39 @@ export function findNearestWithBeds(list, filter = 'all') {
   return sortByDistance(withBeds)[0] || null;
 }
 
+/**
+ * Request device location.
+ * Caches the last known position for 60 min so subsequent screens load
+ * instantly without re-requesting the GPS fix.
+ */
 export async function requestLocation() {
   const { status } = await Location.requestForegroundPermissionsAsync();
-  if (status !== 'granted') return null;
+  if (status !== 'granted') {
+    Alert.alert(
+      'Location Required',
+      'Please enable location access in your device settings to find nearby hospitals.',
+    );
+    return null;
+  }
   const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-  return { lat: loc.coords.latitude, lng: loc.coords.longitude };
+  const coords = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+  // Cache last known location so other screens can skip the GPS wait
+  await cacheSet(USER_LOCATION_KEY, coords, TTL_LOCATION);
+  return coords;
+}
+
+/** Returns cached location immediately (no GPS wait) */
+export async function getCachedLocation() {
+  return cacheGet(USER_LOCATION_KEY);
 }
 
 export async function fetchNearbyHospitals(coords, radiusKm = 25) {
   if (!coords?.lat) return [];
+
+  // Check hospital-list cache first (30 min TTL)
+  const listKey = hospitalListKey(coords.lat, coords.lng, radiusKm);
+  const cached = await cacheGet(listKey);
+  if (cached) return cached;
 
   const [osmResult, dbResult] = await Promise.allSettled([
     discoverHospitals(coords.lat, coords.lng, radiusKm),
@@ -185,9 +215,9 @@ export async function fetchNearbyHospitals(coords, radiusKm = 25) {
   const dbHospitals = dbResult.status === 'fulfilled' ? (dbResult.value?.data || []) : [];
 
   const combined = [...dbHospitals];
-  const dbKeys = new Set(combined.map(h => `${h.name.toLowerCase()}_${(h.lat || 0).toFixed(3)}`));
+  const dbKeys = new Set(combined.map(h => `${(h.name || '').toLowerCase()}_${(h.lat || 0).toFixed(3)}`));
   osmHospitals.forEach(oh => {
-    const key = `${oh.name.toLowerCase()}_${(oh.lat || 0).toFixed(3)}`;
+    const key = `${(oh.name || '').toLowerCase()}_${(oh.lat || 0).toFixed(3)}`;
     if (!dbKeys.has(key)) {
       combined.push({
         ...oh,
@@ -203,10 +233,36 @@ export async function fetchNearbyHospitals(coords, radiusKm = 25) {
     }
   });
 
-  return sortByDistance(combined);
+  const sorted = sortByDistance(combined);
+
+  // Cache the merged result
+  await cacheSet(listKey, sorted, TTL_HOSPITALS);
+
+  return sorted;
 }
 
-const CACHE_KEY = 'nearby_hospitals_cache';
+/**
+ * Find and cache the nearest hospital with available beds.
+ * Used by SOS screen — avoids re-running the search on re-renders.
+ */
+export async function fetchNearestHospital(coords, filter = 'all') {
+  if (!coords?.lat) return null;
+
+  const key = nearestHospitalKey(coords.lat, coords.lng);
+  const cached = await cacheGet(key);
+  if (cached) return cached;
+
+  const list = await fetchNearbyHospitals(coords, 50);
+  const nearest = findNearestWithBeds(list, filter);
+
+  if (nearest) {
+    await cacheSet(key, nearest, TTL_NEAREST);
+  }
+  return nearest;
+}
+
+// ─── Fallback cache key for useNearbyHospitals (generic offline backup) ──────
+const LEGACY_CACHE_KEY = 'nearby_hospitals_cache';
 
 export function useNearbyHospitals(initialCoords = null, radiusKm = 25) {
   const [coords, setCoords] = useState(initialCoords);
@@ -218,12 +274,18 @@ export function useNearbyHospitals(initialCoords = null, radiusKm = 25) {
 
   const load = useCallback(async (c = coords, showRefresh = false) => {
     let target = c;
+
     if (!target?.lat) {
-      target = await requestLocation();
+      // Try the persisted location first — avoids GPS round-trip
+      target = await getCachedLocation();
+      if (!target) {
+        target = await requestLocation();
+      }
       if (target) setCoords(target);
     }
+
     if (!target?.lat) {
-      const cached = await cacheGet(CACHE_KEY);
+      const cached = await cacheGet(LEGACY_CACHE_KEY);
       if (cached?.list?.length) {
         setHospitals(cached.list);
         setFromCache(true);
@@ -233,16 +295,24 @@ export function useNearbyHospitals(initialCoords = null, radiusKm = 25) {
       setRefreshing(false);
       return;
     }
+
     try {
       if (showRefresh) setRefreshing(true);
       else setLoading(true);
       setError(null);
+
       const list = await fetchNearbyHospitals(target, radiusKm);
       setHospitals(list);
-      setFromCache(false);
-      await cacheSet(CACHE_KEY, { list, coords: target, at: new Date().toISOString() });
+
+      // Detect if we got a fresh API result or served from cache
+      const listKey = hospitalListKey(target.lat, target.lng, radiusKm);
+      const isCached = !!(await cacheGet(listKey)); // will be true since we just set it
+      setFromCache(false); // data is fresh/valid — not stale offline copy
+
+      // Keep legacy cache as offline backup
+      await cacheSet(LEGACY_CACHE_KEY, { list, coords: target, at: new Date().toISOString() });
     } catch (e) {
-      const cached = await cacheGet(CACHE_KEY);
+      const cached = await cacheGet(LEGACY_CACHE_KEY);
       if (cached?.list?.length) {
         setHospitals(cached.list);
         setFromCache(true);

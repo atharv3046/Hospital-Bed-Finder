@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { Animated, View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 
 import Home from './screens/Home';
 import MapScreen from './screens/MapScreen';
@@ -12,8 +12,10 @@ import SOSScreen from './screens/SOSScreen';
 import Profile from './screens/Profile';
 import HospitalDetail from './screens/HospitalDetail';
 import StaffDashboard from './screens/StaffDashboard';
+import LoadingScreen from './screens/LoadingScreen';
 
 import { AuthProvider, useAuth } from './screens/auth/AuthProvider';
+import { HospitalProvider, useHospitals } from './screens/HospitalContext';
 import SignIn from './screens/auth/SignIn';
 import SignUp from './screens/auth/SignUp';
 
@@ -127,6 +129,34 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// Gates the main tab navigator behind the preload "ready" flag.
+// Shows LoadingScreen with a pulse animation while data is being fetched,
+// then fades the app in once ready=true — zero flicker.
+function AppGate() {
+  const { ready } = useHospitals();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (ready) {
+      Animated.timing(fadeAnim, {
+        toValue: 1, duration: 400, useNativeDriver: true,
+      }).start();
+    }
+  }, [ready]);
+
+  if (!ready) return <LoadingScreen />;
+
+  return (
+    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="MainTabs" component={MainTabs} />
+        <Stack.Screen name="HospitalDetail" component={HospitalDetail} />
+        <Stack.Screen name="StaffDashboard" component={StaffDashboard} />
+      </Stack.Navigator>
+    </Animated.View>
+  );
+}
+
 function RootNavigator() {
   const { user, loading } = useAuth();
 
@@ -140,17 +170,15 @@ function RootNavigator() {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {user ? (
-        <>
-          <Stack.Screen name="MainTabs" component={MainTabs} />
-          <Stack.Screen name="HospitalDetail" component={HospitalDetail} />
-          <Stack.Screen name="StaffDashboard" component={StaffDashboard} />
-        </>
-      ) : (
-        <Stack.Screen name="Auth" component={AuthStackScreens} />
-      )}
-    </Stack.Navigator>
+    <HospitalProvider user={user}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {user ? (
+          <Stack.Screen name="App" component={AppGate} />
+        ) : (
+          <Stack.Screen name="Auth" component={AuthStackScreens} />
+        )}
+      </Stack.Navigator>
+    </HospitalProvider>
   );
 }
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   Linking, RefreshControl, ActivityIndicator, TextInput, Alert,
@@ -7,33 +7,54 @@ import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Radii, Sp, Shadows } from './ui/theme';
 import { Badge, BedProgressBar, FilterChips, StatusLegend } from './ui/kit';
+import { useHospitals } from './HospitalContext';
 import {
-  useNearbyHospitals, BED_FILTERS, filterByBedType, getAvailabilityStatus,
+  BED_FILTERS, filterByBedType, getAvailabilityStatus,
   STATUS_LABELS, STATUS_TONES, formatDistance, getBedCounts, hasBedData,
   displayAddress, formatLastUpdated, isPersistentlyFull, isOsmId,
 } from './utils/hospitals';
 
-function HospitalCard({ item, navigation, bedFilter, fromCache }) {
+// ─── Debounce hook ────────────────────────────────────────────────────────────
+// No external dependency — uses setTimeout internally
+function useDebounce(value, delay = 300) {
+  const [debounced, setDebounced] = useState(value);
+  const timer = useRef(null);
+
+  const set = useCallback((v) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setDebounced(v), delay);
+  }, [delay]);
+
+  return [debounced, set];
+}
+
+// ─── HospitalCard — wrapped in React.memo so it only re-renders when its own
+//     props change, not on every search keystroke or filter change ─────────────
+const HospitalCard = React.memo(function HospitalCard({ item, navigation, bedFilter, fromCache }) {
   const status = getAvailabilityStatus(item, bedFilter);
   const registered = hasBedData(item);
   const beds = getBedCounts(item);
   const persistentFull = isPersistentlyFull(item);
   const updated = formatLastUpdated(item.updated_at);
 
-  const openDetail = () => {
+  const openDetail = useCallback(() => {
     if (isOsmId(item.id)) {
       Alert.alert(item.name, displayAddress(item));
       return;
     }
     navigation.navigate('HospitalDetail', { hospitalId: item.id, hospitalData: item });
-  };
+  }, [item, navigation]);
 
-  const call = () => item.phone && Linking.openURL(`tel:${item.phone}`);
-  const directions = () => {
+  const call = useCallback(() => {
+    const phone = item.phone?.trim();
+    if (phone) Linking.openURL(`tel:${phone}`);
+  }, [item.phone]);
+
+  const directions = useCallback(() => {
     if (item.lat && item.lng) {
       Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${item.lat},${item.lng}`);
     }
-  };
+  }, [item.lat, item.lng]);
 
   const bedTypes = [
     { key: 'general', label: 'GENERAL', ...beds.general },
@@ -92,24 +113,46 @@ function HospitalCard({ item, navigation, bedFilter, fromCache }) {
       </View>
     </TouchableOpacity>
   );
-}
+});
 
+// ─── List screen ──────────────────────────────────────────────────────────────
 export default function List() {
   const navigation = useNavigation();
-  const { hospitals, loading, refreshing, refresh, fromCache } = useNearbyHospitals(null, 25);
+  // ✅ Data is preloaded — no API call, instant render
+  const { hospitals, loading, refreshing, refresh, fromCache } = useHospitals();
   const [bedFilter, setBedFilter] = useState('all');
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');        // raw input — updates instantly
+  const [debouncedSearch, setDebouncedSearch] = useDebounce('', 300); // used for filtering
+
+  // Wire the input so typing feels instant but filtering is debounced
+  const handleSearch = useCallback((text) => {
+    setSearchInput(text);          // update text field immediately
+    setDebouncedSearch(text);      // schedule filter update after 300ms
+  }, [setDebouncedSearch]);
 
   const filtered = useMemo(() => {
     let list = filterByBedType(hospitals, bedFilter);
-    const q = search.trim().toLowerCase();
+    const q = debouncedSearch.trim().toLowerCase();
     if (q) {
       list = list.filter(h =>
-        h.name.toLowerCase().includes(q) || displayAddress(h).toLowerCase().includes(q)
+        (h.name || '').toLowerCase().includes(q) ||
+        displayAddress(h).toLowerCase().includes(q)
       );
     }
     return list;
-  }, [hospitals, bedFilter, search]);
+  }, [hospitals, bedFilter, debouncedSearch]);
+
+  // Stable renderItem — avoids FlatList re-creating all items on parent re-render
+  const renderItem = useCallback(({ item }) => (
+    <HospitalCard
+      item={item}
+      navigation={navigation}
+      bedFilter={bedFilter}
+      fromCache={fromCache}
+    />
+  ), [navigation, bedFilter, fromCache]);
+
+  const keyExtractor = useCallback((item) => String(item.id), []);
 
   return (
     <View style={s.container}>
@@ -129,9 +172,14 @@ export default function List() {
             style={s.searchInput}
             placeholder="Search hospitals…"
             placeholderTextColor={Colors.sub}
-            value={search}
-            onChangeText={setSearch}
+            value={searchInput}
+            onChangeText={handleSearch}
           />
+          {!!searchInput && (
+            <TouchableOpacity onPress={() => handleSearch('')}>
+              <MaterialCommunityIcons name="close-circle" size={18} color={Colors.sub} />
+            </TouchableOpacity>
+          )}
         </View>
         <FilterChips options={BED_FILTERS} value={bedFilter} onChange={setBedFilter} />
       </View>
@@ -141,14 +189,19 @@ export default function List() {
       ) : (
         <FlatList
           data={filtered}
-          keyExtractor={item => String(item.id)}
-          renderItem={({ item }) => (
-            <HospitalCard item={item} navigation={navigation} bedFilter={bedFilter} fromCache={fromCache} />
-          )}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
           contentContainerStyle={{ padding: Sp.md, paddingBottom: 100 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />
           }
+          // Performance props
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          windowSize={10}
+          initialNumToRender={8}
+          getItemLayout={undefined}  // cards are variable height; leave undefined
           ListEmptyComponent={
             <View style={s.empty}>
               <MaterialCommunityIcons name="hospital-building" size={56} color={Colors.sub + '60'} />
