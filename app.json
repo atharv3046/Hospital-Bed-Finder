@@ -12,6 +12,7 @@
     },
     "android": {
       "package": "com.atharv30.hospitalbedfinder",
+      "jsEngine": "jsc",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
@@ -29,6 +30,11 @@
     "plugins": [
       "expo-font",
       "expo-location"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1cfd0724-08ab-426f-be85-e1d082f41e2d"
+      }
+    }
   }
 }
