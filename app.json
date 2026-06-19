@@ -12,7 +12,6 @@
     },
     "android": {
       "package": "com.atharv30.hospitalbedfinder",
-      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
